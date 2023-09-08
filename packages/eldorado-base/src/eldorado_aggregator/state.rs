@@ -3,6 +3,7 @@ use cosmwasm_std::Addr;
 use cw_storage_plus::Item;
 
 pub const TIMEOUT_IN_MINS: u8 = 15;
+pub const DENOM_KUJI: &str = "ukuji";
 
 pub const CONFIG: Item<Config> = Item::new("config");
 #[cw_serde]

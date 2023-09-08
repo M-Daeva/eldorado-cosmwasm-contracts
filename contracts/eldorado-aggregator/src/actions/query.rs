@@ -1,4 +1,4 @@
-use cosmwasm_std::{Coin, Decimal, Deps, Env, StdResult};
+use cosmwasm_std::{Deps, Env, StdResult};
 
 use eldorado_base::eldorado_aggregator::state::{Config, CONFIG};
 

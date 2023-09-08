@@ -27,22 +27,12 @@ pub enum ContractError {
     #[error("Sender does not have access permissions!")]
     Unauthorized,
 
-    // agent-macrodex
-    #[error("Asset is not found!")]
-    AssetIsNotFound,
+    #[error("Undefined ID!")]
+    UndefinedId,
 
-    #[error("Intermediate routing asset is not found!")]
-    ItermediateAssetIsNotFound,
+    #[error("Event is not found!")]
+    EventIsNotFound,
 
-    #[error("Routes are not found!")]
-    EmptyRoutes,
-
-    #[error("Orchestrator is not found!")]
-    OrchestratorIsNotFound,
-
-    #[error("Can not transform into assets!")]
-    IntoAssets,
-
-    #[error("Pool is not found!")]
-    PoolIsNotFound,
+    #[error("Attribute is not found!")]
+    AttributeIsNotFound,
 }

@@ -1,5 +1,7 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 
+use crate::mantaswap;
+
 #[cw_serde]
 pub struct InstantiateMsg {
     pub router_address: String,
@@ -10,14 +12,17 @@ pub enum ExecuteMsg {
     /// Called by user to:
     /// 1) swap token on Kujira -> native Kuji
     /// 2) send native Kuji to vault
-    SwapIn { vault_address: String },
+    SwapIn {
+        vault_address: String,
+        mantaswap_msg: mantaswap::msg::ExecuteMsg,
+    },
     /// Called by vault (not restricted) to:
     /// 1) swap native Kuji -> token on Kujira (or don't swap if Kuji is asked asset)
     /// 2) send token on Kujira to user address on Kujira or other Cosmos network
     SwapOut {
-        denom_out: String,          // if it's "ukuji" swap isn't required
-        user_address: String,       // it can be "kujira1...", "osmo1...", etc.
-        channel_id: Option<String>, // must be specified for IBC transfer
+        user_address: String, // if address isn't "kujira1..." IBC transfer will be executed
+        mantaswap_msg: mantaswap::msg::ExecuteMsg,
+        channel_id: Option<String>, // required for IBC transfer
     },
     /// Called by admin
     UpdateConfig {

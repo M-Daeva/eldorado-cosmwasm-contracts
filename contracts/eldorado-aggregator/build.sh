@@ -13,24 +13,24 @@ cargo schema
 # https://github.com/CosmWasm/ts-codegen/issues/90
 rm -rf ./schema/raw
 
-# generate contract-to-client interface
-cosmwasm-ts-codegen generate \
-  --plugin client \
-	--plugin message-composer \
-  --schema ./schema \
-  --out $CODEGEN_PATH \
-  --name $DIR_NAME \
-  --no-bundle
+# # generate contract-to-client interface
+# cosmwasm-ts-codegen generate \
+#   --plugin client \
+# 	--plugin message-composer \
+#   --schema ./schema \
+#   --out $CODEGEN_PATH \
+#   --name $DIR_NAME \
+#   --no-bundle
 
-# TODO: remove when https://github.com/CosmWasm/ts-codegen/pull/109 will be merged
-# temporary fix to not use `cosmwasm` module
-for file in $CODEGEN_PATH*
-do
-  if [ -f "$file" ]
-  then
-    sed -i 's/import { MsgExecuteContractEncodeObject } from "cosmwasm";/import { MsgExecuteContractEncodeObject } from "@cosmjs\/cosmwasm-stargate";/g' "$file"
-  fi
-done
+# # TODO: remove when https://github.com/CosmWasm/ts-codegen/pull/109 will be merged
+# # temporary fix to not use `cosmwasm` module
+# for file in $CODEGEN_PATH*
+# do
+#   if [ -f "$file" ]
+#   then
+#     sed -i 's/import { MsgExecuteContractEncodeObject } from "cosmwasm";/import { MsgExecuteContractEncodeObject } from "@cosmjs\/cosmwasm-stargate";/g' "$file"
+#   fi
+# done
 
 # build optimized binary
 cd ../..

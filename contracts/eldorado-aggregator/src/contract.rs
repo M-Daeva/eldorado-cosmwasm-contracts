@@ -1,6 +1,6 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::{
-    entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult,
+    entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response, StdResult,
 };
 
 use eldorado_base::{
@@ -11,9 +11,11 @@ use eldorado_base::{
 use crate::actions::{
     execute::{try_swap_in, try_swap_out, try_update_config},
     instantiate::try_instantiate,
-    other::migrate_contract,
+    other::{migrate_contract, try_transfer},
     query::query_config,
 };
+
+pub const SWAP_REPLY: u64 = 1;
 
 /// Creates a new contract with the specified parameters packed in the "msg" variable
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -35,12 +37,15 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::SwapIn { vault_address } => try_swap_in(deps, env, info, vault_address),
+        ExecuteMsg::SwapIn {
+            vault_address,
+            mantaswap_msg,
+        } => try_swap_in(deps, env, info, vault_address, mantaswap_msg),
         ExecuteMsg::SwapOut {
-            denom_out,
             user_address,
+            mantaswap_msg,
             channel_id,
-        } => try_swap_out(deps, env, info, denom_out, user_address, channel_id),
+        } => try_swap_out(deps, env, info, user_address, mantaswap_msg, channel_id),
         ExecuteMsg::UpdateConfig {
             ibc_timeout_in_mins,
             router_address,
@@ -53,6 +58,17 @@ pub fn execute(
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::QueryConfig {} => to_binary(&query_config(deps, env)?),
+    }
+}
+
+/// Exposes all the replies available in the contract
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn reply(deps: DepsMut, env: Env, reply: Reply) -> Result<Response, ContractError> {
+    let Reply { id, result } = reply;
+
+    match id {
+        SWAP_REPLY => try_transfer(deps, env, &result),
+        _ => Err(ContractError::UndefinedId),
     }
 }
 

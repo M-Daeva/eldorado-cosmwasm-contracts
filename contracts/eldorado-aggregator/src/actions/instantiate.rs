@@ -25,5 +25,9 @@ pub fn try_instantiate(
 
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    Ok(Response::new().add_attributes([("action", "try_instantiate")]))
+    Ok(Response::new().add_attributes([
+        ("action", "try_instantiate"),
+        ("admin", admin.as_str()),
+        ("router", router.as_str()),
+    ]))
 }
