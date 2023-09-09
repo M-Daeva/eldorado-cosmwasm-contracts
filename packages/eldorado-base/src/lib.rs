@@ -12,3 +12,4 @@ pub mod mantaswap {
 pub mod constants;
 pub mod converters;
 pub mod error;
+pub mod math;

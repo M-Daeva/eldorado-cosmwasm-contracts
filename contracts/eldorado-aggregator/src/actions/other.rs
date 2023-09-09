@@ -98,7 +98,7 @@ fn parse_recipient_amount_denom(
     let event = res
         .events
         .iter()
-        .find(|x| x.ty == "coin_received")
+        .find(|x| x.ty.contains("coin_received"))
         .ok_or(ContractError::EventIsNotFound)?;
 
     let recipient = &event

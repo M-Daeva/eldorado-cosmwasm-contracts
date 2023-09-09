@@ -32,7 +32,7 @@ pub fn try_swap(
         .add_attribute("amount", coins[0].to_string())
         .add_attribute("receiver", recipient);
 
-    let event_last = Event::new("wasm-trade")
+    let event_last = Event::new("trade")
         .add_attribute("quote_amount", "2528")
         .add_attribute("type", "buy");
 
