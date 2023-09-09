@@ -32,5 +32,6 @@ speculoos = "0.11.0"
 kujira = { git = "https://github.com/Team-Kujira/kujira-rs" }
 
 eldorado-base = { path = "./packages/eldorado-base" }
+mantaswap-mocks = { path = "./packages/mantaswap-mocks" }
 
 eldorado-aggregator = { path = "./contracts/eldorado-aggregator" }
