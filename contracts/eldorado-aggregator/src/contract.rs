@@ -4,18 +4,19 @@ use cosmwasm_std::{
 };
 
 use eldorado_base::{
-    eldorado_aggregator::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg},
+    eldorado_aggregator::{
+        msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg},
+        state::{SWAP_IN_REPLY, SWAP_OUT_REPLY},
+    },
     error::ContractError,
 };
 
 use crate::actions::{
-    execute::{try_swap_in, try_swap_out, try_update_config},
+    execute::{try_swap_in, try_swap_out, try_update_config, try_update_vault},
     instantiate::try_instantiate,
-    other::{migrate_contract, try_transfer},
+    other::{add_attributes, migrate_contract, try_transfer},
     query::query_config,
 };
-
-pub const SWAP_REPLY: u64 = 1;
 
 /// Creates a new contract with the specified parameters packed in the "msg" variable
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -46,10 +47,23 @@ pub fn execute(
             mantaswap_msg,
             channel_id,
         } => try_swap_out(deps, env, info, user_address, mantaswap_msg, channel_id),
+        ExecuteMsg::UpdateVault { vault_address } => {
+            try_update_vault(deps, env, info, vault_address)
+        }
         ExecuteMsg::UpdateConfig {
+            owner_address,
+            vault_address,
             ibc_timeout_in_mins,
             router_address,
-        } => try_update_config(deps, env, info, ibc_timeout_in_mins, router_address),
+        } => try_update_config(
+            deps,
+            env,
+            info,
+            owner_address,
+            vault_address,
+            ibc_timeout_in_mins,
+            router_address,
+        ),
     }
 }
 
@@ -67,8 +81,9 @@ pub fn reply(deps: DepsMut, env: Env, reply: Reply) -> Result<Response, Contract
     let Reply { id, result } = reply;
 
     match id {
-        SWAP_REPLY => try_transfer(deps, env, &result),
-        _ => Err(ContractError::UndefinedId),
+        SWAP_IN_REPLY => add_attributes(deps, env, &result),
+        SWAP_OUT_REPLY => try_transfer(deps, env, &result),
+        _ => Err(ContractError::UndefinedReplyId),
     }
 }
 

@@ -27,12 +27,30 @@ pub enum ContractError {
     #[error("Sender does not have access permissions!")]
     Unauthorized,
 
-    #[error("Undefined ID!")]
-    UndefinedId,
+    #[error("Undefined Reply ID!")]
+    UndefinedReplyId,
 
     #[error("Event is not found!")]
     EventIsNotFound,
 
     #[error("Attribute is not found!")]
     AttributeIsNotFound,
+
+    #[error("Wrong MantaSwap message type!")]
+    WrongMantaswapMsg,
+
+    #[error("{symbol:?} balance isn't enough!")]
+    BalanceIsNotEnough { symbol: String },
+
+    #[error("Recipient parameters are not found!")]
+    RecipientParametersAreNotFound,
+
+    #[error("channel_id is not found!")]
+    ChannelIdIsNotFound,
+
+    #[error("The asset is not IBC token!")]
+    AssetIsNotIbcToken,
+
+    #[error("Coin is not found!")]
+    CoinIsNotFound,
 }
