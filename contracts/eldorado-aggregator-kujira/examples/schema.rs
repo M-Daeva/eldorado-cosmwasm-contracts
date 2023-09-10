@@ -1,6 +1,8 @@
 use cosmwasm_schema::write_api;
 
-use eldorado_base::eldorado_aggregator::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
+use eldorado_base::eldorado_aggregator_kujira::msg::{
+    ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg,
+};
 
 fn main() {
     write_api! {

@@ -5,7 +5,7 @@ use cosmwasm_std::{
 };
 
 use eldorado_base::{
-    eldorado_aggregator::{
+    eldorado_aggregator_kujira::{
         msg::MigrateMsg,
         state::{CONFIG, RECIPIENT_PARAMETERS},
         types::RecipientParameters,
@@ -21,11 +21,7 @@ pub fn add_attributes(
     // add events from Swap response to SwapIn response
     let (recipient, amount, denom) = parse_recipient_amount_denom(result)?;
 
-    Ok(Response::new().add_attributes([
-        ("recipient", recipient),
-        ("amount", amount.to_string()),
-        ("denom", denom),
-    ]))
+    Ok(Response::new().add_attributes([("digest", format!("{} {} {}", amount, denom, recipient))]))
 }
 
 pub fn try_transfer(
@@ -57,11 +53,10 @@ pub fn try_transfer(
 
     RECIPIENT_PARAMETERS.save(deps.storage, &recipient_parameters_tail)?;
 
-    let attributes = [
-        ("recipient", recipient_address.to_string()),
-        ("amount", amount.to_string()),
-        ("denom", denom.clone()),
-    ];
+    let attributes = [(
+        "digest",
+        format!("{} {} {}", amount, denom, recipient_address),
+    )];
 
     // choose the type of transfer
     let msg = match channel_id.to_owned() {

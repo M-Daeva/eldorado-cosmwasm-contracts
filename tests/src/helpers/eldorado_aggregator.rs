@@ -7,7 +7,7 @@ use crate::helpers::{
 };
 
 use eldorado_base::{
-    eldorado_aggregator::{
+    eldorado_aggregator_kujira::{
         msg::{ExecuteMsg, QueryMsg},
         state::Config,
     },
@@ -20,8 +20,8 @@ pub trait EldoradoAggregatorExtension {
         sender: &ProjectAccount,
         vault_address: &ProjectAccount,
         mantaswap_msg: &mantaswap::msg::ExecuteMsg,
-        amount_in: T,
-        denom_in: &ProjectCoin,
+        amount_in: &Option<T>,
+        denom_in: &Option<ProjectCoin>,
     ) -> StdResult<AppResponse>
     where
         Uint128: From<T>,
@@ -30,11 +30,11 @@ pub trait EldoradoAggregatorExtension {
     fn eldorado_aggregator_try_swap_out<T>(
         &mut self,
         sender: &ProjectAccount,
-        vault_address: &ProjectAccount,
+        user_address: &ProjectAccount,
         mantaswap_msg: &mantaswap::msg::ExecuteMsg,
         channel_id: &Option<String>,
-        amount_in: T,
-        denom_in: &ProjectCoin,
+        amount_in: &Option<T>,
+        denom_in: &Option<ProjectCoin>,
     ) -> StdResult<AppResponse>
     where
         Uint128: From<T>,
@@ -44,13 +44,14 @@ pub trait EldoradoAggregatorExtension {
         &mut self,
         sender: &ProjectAccount,
         vault_address: &ProjectAccount,
-        amount_in: T,
-        denom_in: &ProjectCoin,
+        amount_in: &Option<T>,
+        denom_in: &Option<ProjectCoin>,
     ) -> StdResult<AppResponse>
     where
         Uint128: From<T>,
         T: Clone;
 
+    #[allow(clippy::too_many_arguments)]
     fn eldorado_aggregator_try_update_config<T>(
         &mut self,
         sender: &ProjectAccount,
@@ -58,8 +59,8 @@ pub trait EldoradoAggregatorExtension {
         vault_address: &Option<ProjectAccount>,
         ibc_timeout_in_mins: &Option<u8>,
         router_address: &Option<&impl ToString>,
-        amount_in: T,
-        denom_in: &ProjectCoin,
+        amount_in: &Option<T>,
+        denom_in: &Option<ProjectCoin>,
     ) -> StdResult<AppResponse>
     where
         Uint128: From<T>,
@@ -75,13 +76,22 @@ impl EldoradoAggregatorExtension for Project {
         sender: &ProjectAccount,
         vault_address: &ProjectAccount,
         mantaswap_msg: &mantaswap::msg::ExecuteMsg,
-        amount_in: T,
-        denom_in: &ProjectCoin,
+        amount_in: &Option<T>,
+        denom_in: &Option<ProjectCoin>,
     ) -> StdResult<AppResponse>
     where
         Uint128: From<T>,
         T: Clone,
     {
+        let send_funds = &if amount_in.is_some() && denom_in.is_some() {
+            vec![coin(
+                Uint128::from(amount_in.clone().unwrap()).u128(),
+                denom_in.unwrap().to_string(),
+            )]
+        } else {
+            vec![]
+        };
+
         self.app
             .execute_contract(
                 sender.to_address(),
@@ -90,7 +100,7 @@ impl EldoradoAggregatorExtension for Project {
                     vault_address: vault_address.to_string(),
                     mantaswap_msg: mantaswap_msg.to_owned(),
                 },
-                &[coin(Uint128::from(amount_in).u128(), denom_in.to_string())],
+                send_funds,
             )
             .map_err(|err| err.downcast().unwrap())
     }
@@ -102,13 +112,22 @@ impl EldoradoAggregatorExtension for Project {
         user_address: &ProjectAccount,
         mantaswap_msg: &mantaswap::msg::ExecuteMsg,
         channel_id: &Option<String>,
-        amount_in: T,
-        denom_in: &ProjectCoin,
+        amount_in: &Option<T>,
+        denom_in: &Option<ProjectCoin>,
     ) -> StdResult<AppResponse>
     where
         Uint128: From<T>,
         T: Clone,
     {
+        let send_funds = &if amount_in.is_some() && denom_in.is_some() {
+            vec![coin(
+                Uint128::from(amount_in.clone().unwrap()).u128(),
+                denom_in.unwrap().to_string(),
+            )]
+        } else {
+            vec![]
+        };
+
         self.app
             .execute_contract(
                 sender.to_address(),
@@ -118,7 +137,7 @@ impl EldoradoAggregatorExtension for Project {
                     mantaswap_msg: mantaswap_msg.to_owned(),
                     channel_id: channel_id.to_owned(),
                 },
-                &[coin(Uint128::from(amount_in).u128(), denom_in.to_string())],
+                send_funds,
             )
             .map_err(|err| err.downcast().unwrap())
     }
@@ -128,13 +147,22 @@ impl EldoradoAggregatorExtension for Project {
         &mut self,
         sender: &ProjectAccount,
         vault_address: &ProjectAccount,
-        amount_in: T,
-        denom_in: &ProjectCoin,
+        amount_in: &Option<T>,
+        denom_in: &Option<ProjectCoin>,
     ) -> StdResult<AppResponse>
     where
         Uint128: From<T>,
         T: Clone,
     {
+        let send_funds = &if amount_in.is_some() && denom_in.is_some() {
+            vec![coin(
+                Uint128::from(amount_in.clone().unwrap()).u128(),
+                denom_in.unwrap().to_string(),
+            )]
+        } else {
+            vec![]
+        };
+
         self.app
             .execute_contract(
                 sender.to_address(),
@@ -142,7 +170,7 @@ impl EldoradoAggregatorExtension for Project {
                 &ExecuteMsg::UpdateVault {
                     vault_address: vault_address.to_string(),
                 },
-                &[coin(Uint128::from(amount_in).u128(), denom_in.to_string())],
+                send_funds,
             )
             .map_err(|err| err.downcast().unwrap())
     }
@@ -155,13 +183,22 @@ impl EldoradoAggregatorExtension for Project {
         vault_address: &Option<ProjectAccount>,
         ibc_timeout_in_mins: &Option<u8>,
         router_address: &Option<&impl ToString>,
-        amount_in: T,
-        denom_in: &ProjectCoin,
+        amount_in: &Option<T>,
+        denom_in: &Option<ProjectCoin>,
     ) -> StdResult<AppResponse>
     where
         Uint128: From<T>,
         T: Clone,
     {
+        let send_funds = &if amount_in.is_some() && denom_in.is_some() {
+            vec![coin(
+                Uint128::from(amount_in.clone().unwrap()).u128(),
+                denom_in.unwrap().to_string(),
+            )]
+        } else {
+            vec![]
+        };
+
         self.app
             .execute_contract(
                 sender.to_address(),
@@ -172,7 +209,7 @@ impl EldoradoAggregatorExtension for Project {
                     ibc_timeout_in_mins: ibc_timeout_in_mins.to_owned(),
                     router_address: Some(router_address.unwrap().to_string()),
                 },
-                &[coin(Uint128::from(amount_in).u128(), denom_in.to_string())],
+                send_funds,
             )
             .map_err(|err| err.downcast().unwrap())
     }

@@ -35,4 +35,4 @@ kujira = { git = "https://github.com/Team-Kujira/kujira-rs" }
 eldorado-base = { path = "./packages/eldorado-base" }
 mantaswap-mocks = { path = "./packages/mantaswap-mocks" }
 
-eldorado-aggregator = { path = "./contracts/eldorado-aggregator" }
+eldorado-aggregator-kujira = { path = "./contracts/eldorado-aggregator-kujira" }

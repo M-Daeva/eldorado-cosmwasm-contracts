@@ -2,14 +2,14 @@ use cosmwasm_std::{DepsMut, Env, MessageInfo, Response};
 use cw2::set_contract_version;
 
 use eldorado_base::{
-    eldorado_aggregator::{
+    eldorado_aggregator_kujira::{
         msg::InstantiateMsg,
         state::{Config, CONFIG, RECIPIENT_PARAMETERS},
     },
     error::ContractError,
 };
 
-const CONTRACT_NAME: &str = "crates.io:eldorado_aggregator";
+const CONTRACT_NAME: &str = "crates.io:eldorado_aggregator_kujira";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub fn try_instantiate(

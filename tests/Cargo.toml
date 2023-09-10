@@ -31,4 +31,4 @@ kujira = { workspace = true }
 eldorado-base = { workspace = true }
 mantaswap-mocks = { workspace = true }
 
-eldorado-aggregator = { workspace = true }
+eldorado-aggregator-kujira = { workspace = true }

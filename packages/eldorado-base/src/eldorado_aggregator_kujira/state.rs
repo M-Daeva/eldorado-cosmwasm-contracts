@@ -2,7 +2,7 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Addr;
 use cw_storage_plus::Item;
 
-use crate::eldorado_aggregator::types::RecipientParameters;
+use crate::eldorado_aggregator_kujira::types::RecipientParameters;
 
 pub const TIMEOUT_IN_MINS: u8 = 15;
 pub const DENOM_KUJI: &str = "ukuji";

@@ -28,7 +28,7 @@ impl ProjectAccount {
     pub fn get_initial_funds_amount(&self) -> u128 {
         match self {
             ProjectAccount::Admin => INCREASED_FUNDS_AMOUNT,
-            ProjectAccount::Owner => 0,
+            ProjectAccount::Owner => DEFAULT_FUNDS_AMOUNT,
             ProjectAccount::Alice => DEFAULT_FUNDS_AMOUNT,
             ProjectAccount::Bob => DEFAULT_FUNDS_AMOUNT,
         }
@@ -37,10 +37,13 @@ impl ProjectAccount {
 
 #[derive(Debug, Clone, Copy, Display, IntoStaticStr, EnumIter)]
 pub enum ProjectCoin {
+    /// Native token
     #[strum(serialize = "ukuji")]
     Kuji,
+    /// Factory token
     #[strum(serialize = "factory/uusk")]
     Usk,
+    /// IBC token
     #[strum(serialize = "ibc/ushd")]
     Shd,
 }

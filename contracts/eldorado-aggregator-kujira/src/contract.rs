@@ -4,7 +4,7 @@ use cosmwasm_std::{
 };
 
 use eldorado_base::{
-    eldorado_aggregator::{
+    eldorado_aggregator_kujira::{
         msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg},
         state::{SWAP_IN_REPLY, SWAP_OUT_REPLY},
     },

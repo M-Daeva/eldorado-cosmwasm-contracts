@@ -37,11 +37,11 @@ impl WithCodes for Project {
     fn store_eldorado_aggregator_code(&mut self) -> u64 {
         self.app.store_code(Box::new(
             ContractWrapper::new(
-                eldorado_aggregator::contract::execute,
-                eldorado_aggregator::contract::instantiate,
-                eldorado_aggregator::contract::query,
+                eldorado_aggregator_kujira::contract::execute,
+                eldorado_aggregator_kujira::contract::instantiate,
+                eldorado_aggregator_kujira::contract::query,
             )
-            .with_reply(eldorado_aggregator::contract::reply),
+            .with_reply(eldorado_aggregator_kujira::contract::reply),
         ))
     }
 
@@ -70,7 +70,7 @@ impl WithCodes for Project {
         self.instantiate_contract(
             eldorado_aggregator_code_id,
             "eldorado_aggregator",
-            &eldorado_base::eldorado_aggregator::msg::InstantiateMsg {
+            &eldorado_base::eldorado_aggregator_kujira::msg::InstantiateMsg {
                 owner_address: owner_address.to_string(),
                 router_address: router_address.to_string(),
                 vault_address: vault_address.to_string(),

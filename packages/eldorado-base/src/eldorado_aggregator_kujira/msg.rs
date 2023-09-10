@@ -40,7 +40,7 @@ pub enum ExecuteMsg {
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
-    #[returns(crate::eldorado_aggregator::state::Config)]
+    #[returns(crate::eldorado_aggregator_kujira::state::Config)]
     QueryConfig {},
 }
 

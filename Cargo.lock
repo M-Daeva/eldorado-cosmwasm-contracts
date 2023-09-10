@@ -354,7 +354,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a26ae43d7bcc3b814de94796a5e736d4029efb0ee900c12e2d54c993ad1a1e07"
 
 [[package]]
-name = "eldorado-aggregator"
+name = "eldorado-aggregator-kujira"
 version = "1.0.0"
 dependencies = [
  "cosmwasm-schema",
@@ -988,7 +988,7 @@ dependencies = [
  "cw-storage-plus",
  "cw-utils",
  "cw2",
- "eldorado-aggregator",
+ "eldorado-aggregator-kujira",
  "eldorado-base",
  "kujira",
  "mantaswap-mocks",
