@@ -14,18 +14,14 @@ pub const CONFIG: Item<Config> = Item::new("config");
 #[cw_serde]
 pub struct Config {
     pub admin: Addr,
-    pub owner: Addr,
-    pub vault: Addr,
     pub router: Addr,
     pub ibc_timeout: u64,
 }
 
 impl Config {
-    pub fn new(admin: &Addr, owner: &Addr, vault: &Addr, router: &Addr) -> Self {
+    pub fn new(admin: &Addr, router: &Addr) -> Self {
         Self {
             admin: admin.to_owned(),
-            owner: owner.to_owned(),
-            vault: vault.to_owned(),
             router: router.to_owned(),
             ibc_timeout: (TIMEOUT_IN_MINS as u64) * 60, // timeout in seconds
         }

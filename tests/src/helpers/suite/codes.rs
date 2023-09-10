@@ -1,7 +1,7 @@
 use cosmwasm_std::Addr;
 use cw_multi_test::ContractWrapper;
 
-use crate::helpers::suite::{core::Project, types::ProjectAccount};
+use crate::helpers::suite::core::Project;
 
 pub trait WithCodes {
     // store
@@ -19,8 +19,6 @@ pub trait WithCodes {
     fn instantiate_eldorado_aggregator(
         &mut self,
         eldorado_aggregator_code_id: u64,
-        owner_address: &ProjectAccount,
-        vault_address: &ProjectAccount,
         router_address: &Addr,
     ) -> Addr;
 }
@@ -63,17 +61,13 @@ impl WithCodes for Project {
     fn instantiate_eldorado_aggregator(
         &mut self,
         eldorado_aggregator_code_id: u64,
-        owner_address: &ProjectAccount,
-        vault_address: &ProjectAccount,
         router_address: &Addr,
     ) -> Addr {
         self.instantiate_contract(
             eldorado_aggregator_code_id,
             "eldorado_aggregator",
             &eldorado_base::eldorado_aggregator_kujira::msg::InstantiateMsg {
-                owner_address: owner_address.to_string(),
                 router_address: router_address.to_string(),
-                vault_address: vault_address.to_string(),
             },
         )
     }

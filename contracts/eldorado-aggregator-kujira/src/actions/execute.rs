@@ -37,10 +37,6 @@ pub fn try_swap_out(
     mantaswap_msg: mantaswap::msg::ExecuteMsg,
     channel_id: Option<String>,
 ) -> Result<Response, ContractError> {
-    if info.sender != CONFIG.load(deps.storage)?.vault {
-        Err(ContractError::Unauthorized)?;
-    }
-
     verify_ibc_parameters(&mantaswap_msg, &channel_id)?;
 
     let amount = must_pay(&info, DENOM_KUJI)
@@ -74,37 +70,10 @@ pub fn try_swap_out(
         .add_attributes([("action", "try_swap_out")]))
 }
 
-pub fn try_update_vault(
-    deps: DepsMut,
-    _env: Env,
-    info: MessageInfo,
-    vault_address: String,
-) -> Result<Response, ContractError> {
-    let config = &CONFIG.load(deps.storage)?;
-
-    if (info.sender != config.admin) && (info.sender != config.owner) {
-        Err(ContractError::Unauthorized)?;
-    }
-
-    nonpayable(&info).map_err(|e| ContractError::CustomError { val: e.to_string() })?;
-
-    CONFIG.save(
-        deps.storage,
-        &Config {
-            vault: deps.api.addr_validate(&vault_address)?,
-            ..config.to_owned()
-        },
-    )?;
-
-    Ok(Response::new().add_attributes([("action", "try_update_vault"), ("vault", &vault_address)]))
-}
-
 pub fn try_update_config(
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
-    owner_address: Option<String>,
-    vault_address: Option<String>,
     ibc_timeout_in_mins: Option<u8>,
     router_address: Option<String>,
 ) -> Result<Response, ContractError> {
@@ -117,16 +86,6 @@ pub fn try_update_config(
         |mut config| -> Result<Config, ContractError> {
             if info.sender != config.admin {
                 Err(ContractError::Unauthorized {})?;
-            }
-
-            if let Some(x) = owner_address {
-                config.owner = deps.api.addr_validate(&x)?;
-                attrs.push(("owner".to_string(), config.owner.to_string()));
-            }
-
-            if let Some(x) = vault_address {
-                config.vault = deps.api.addr_validate(&x)?;
-                attrs.push(("vault".to_string(), config.vault.to_string()));
             }
 
             if let Some(x) = ibc_timeout_in_mins {

@@ -12,7 +12,7 @@ use eldorado_base::{
 };
 
 use crate::actions::{
-    execute::{try_swap_in, try_swap_out, try_update_config, try_update_vault},
+    execute::{try_swap_in, try_swap_out, try_update_config},
     instantiate::try_instantiate,
     other::{add_attributes, migrate_contract, try_transfer},
     query::query_config,
@@ -47,23 +47,10 @@ pub fn execute(
             mantaswap_msg,
             channel_id,
         } => try_swap_out(deps, env, info, user_address, mantaswap_msg, channel_id),
-        ExecuteMsg::UpdateVault { vault_address } => {
-            try_update_vault(deps, env, info, vault_address)
-        }
         ExecuteMsg::UpdateConfig {
-            owner_address,
-            vault_address,
             ibc_timeout_in_mins,
             router_address,
-        } => try_update_config(
-            deps,
-            env,
-            info,
-            owner_address,
-            vault_address,
-            ibc_timeout_in_mins,
-            router_address,
-        ),
+        } => try_update_config(deps, env, info, ibc_timeout_in_mins, router_address),
     }
 }
 

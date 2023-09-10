@@ -4,8 +4,6 @@ use crate::mantaswap;
 
 #[cw_serde]
 pub struct InstantiateMsg {
-    pub owner_address: String,
-    pub vault_address: String,
     pub router_address: String,
 }
 
@@ -26,12 +24,8 @@ pub enum ExecuteMsg {
         mantaswap_msg: mantaswap::msg::ExecuteMsg,
         channel_id: Option<String>, // must be specified to enable IBC transfer
     },
-    /// Called by owner
-    UpdateVault { vault_address: String },
     /// Called by admin
     UpdateConfig {
-        owner_address: Option<String>,
-        vault_address: Option<String>,
         ibc_timeout_in_mins: Option<u8>,
         router_address: Option<String>,
     },

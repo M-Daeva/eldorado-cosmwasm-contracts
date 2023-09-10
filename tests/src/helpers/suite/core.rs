@@ -61,8 +61,6 @@ impl Project {
         // instantiate contracts
         let eldorado_aggregator_address = project.instantiate_eldorado_aggregator(
             eldorado_aggregator_code_id,
-            &ProjectAccount::Owner,
-            &ProjectAccount::Bob,
             &mantaswap_router_address,
         );
 

@@ -19,11 +19,9 @@ pub fn try_instantiate(
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     let admin = &info.sender;
-    let owner = &deps.api.addr_validate(&msg.owner_address)?;
-    let vault = &deps.api.addr_validate(&msg.vault_address)?;
     let router = &deps.api.addr_validate(&msg.router_address)?;
 
-    CONFIG.save(deps.storage, &Config::new(admin, owner, vault, router))?;
+    CONFIG.save(deps.storage, &Config::new(admin, router))?;
 
     RECIPIENT_PARAMETERS.save(deps.storage, &vec![])?;
 
@@ -32,8 +30,6 @@ pub fn try_instantiate(
     Ok(Response::new().add_attributes([
         ("action", "try_instantiate"),
         ("admin", admin.as_str()),
-        ("owner", owner.as_str()),
-        ("vault", vault.as_str()),
         ("router", router.as_str()),
     ]))
 }
