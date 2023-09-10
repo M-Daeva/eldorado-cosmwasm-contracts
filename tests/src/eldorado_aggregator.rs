@@ -60,7 +60,18 @@ fn swap_in_default() {
         .query_balance(ProjectAccount::Bob.to_address(), denom_out.to_string())
         .unwrap();
 
-    let digest = &res.events.last().unwrap().attributes.last().unwrap().value;
+    let mut digest_list: Vec<String> = vec![];
+
+    for event in &res.events {
+        for attr in &event.attributes {
+            if attr.key == "digest" {
+                digest_list.push(attr.value.clone());
+                break;
+            }
+        }
+    }
+
+    let digest = digest_list.last().unwrap();
 
     assert_that(digest).is_equal_to("420 ukuji bob".to_string());
 

@@ -1,7 +1,8 @@
 use std::str::FromStr;
 
 use cosmwasm_std::{
-    BankMsg, Coin, CosmosMsg, DepsMut, Env, IbcMsg, IbcTimeout, Response, SubMsgResult, Uint128,
+    Addr, BankMsg, Coin, CosmosMsg, DepsMut, Env, Event, IbcMsg, IbcTimeout, Response,
+    SubMsgResult, Uint128,
 };
 
 use eldorado_base::{
@@ -13,32 +14,72 @@ use eldorado_base::{
     error::ContractError,
 };
 
-pub fn add_attributes(
-    _deps: DepsMut,
-    _env: Env,
-    result: &SubMsgResult,
-) -> Result<Response, ContractError> {
-    // add events from Swap response to SwapIn response
-    let (recipient, amount, denom) = parse_recipient_amount_denom(result)?;
-
-    Ok(Response::new().add_attributes([("digest", format!("{} {} {}", amount, denom, recipient))]))
-}
-
-pub fn try_transfer(
-    deps: DepsMut,
+pub fn swap_in_transfer(
+    mut deps: DepsMut,
     env: Env,
     result: &SubMsgResult,
 ) -> Result<Response, ContractError> {
-    // parse received amount from Swap response events
-    let (_recipient, amount, denom) = parse_recipient_amount_denom(result)?;
-    let balance = deps.querier.query_balance(env.contract.address, &denom)?;
+    let (amount, denom, recipient_address, ..) = parse_attributes(&mut deps, &env, result)?;
 
-    if balance.amount < amount {
-        Err(ContractError::BalanceIsNotEnough {
-            symbol: denom.clone(),
-        })?;
-    }
+    let msg = CosmosMsg::Bank(BankMsg::Send {
+        to_address: recipient_address.to_string(),
+        amount: vec![Coin {
+            amount,
+            denom: denom.clone(),
+        }],
+    });
 
+    Ok(Response::new().add_message(msg).add_attributes([(
+        "digest",
+        format!("{} {} {}", amount, denom, recipient_address),
+    )]))
+}
+
+pub fn swap_out_transfer(
+    mut deps: DepsMut,
+    env: Env,
+    result: &SubMsgResult,
+) -> Result<Response, ContractError> {
+    let (amount, denom, recipient_address, channel_id) = parse_attributes(&mut deps, &env, result)?;
+
+    // choose the type of transfer
+    let msg = match channel_id {
+        None => CosmosMsg::Bank(BankMsg::Send {
+            to_address: recipient_address.to_string(),
+            amount: vec![Coin {
+                amount,
+                denom: denom.clone(),
+            }],
+        }),
+        Some(channel_id) => {
+            let timestamp = env
+                .block
+                .time
+                .plus_seconds(CONFIG.load(deps.storage)?.ibc_timeout);
+
+            CosmosMsg::Ibc(IbcMsg::Transfer {
+                channel_id,
+                to_address: recipient_address.to_string(),
+                amount: Coin {
+                    amount,
+                    denom: denom.clone(),
+                },
+                timeout: IbcTimeout::with_timestamp(timestamp),
+            })
+        }
+    };
+
+    Ok(Response::new().add_message(msg).add_attributes([(
+        "digest",
+        format!("{} {} {}", amount, denom, recipient_address),
+    )]))
+}
+
+fn parse_attributes(
+    deps: &mut DepsMut,
+    env: &Env,
+    result: &SubMsgResult,
+) -> Result<(Uint128, String, Addr, Option<String>), ContractError> {
     let recipient_parameters_list = RECIPIENT_PARAMETERS.load(deps.storage)?;
 
     let RecipientParameters {
@@ -53,65 +94,54 @@ pub fn try_transfer(
 
     RECIPIENT_PARAMETERS.save(deps.storage, &recipient_parameters_tail)?;
 
-    let attributes = [(
-        "digest",
-        format!("{} {} {}", amount, denom, recipient_address),
-    )];
-
-    // choose the type of transfer
-    let msg = match channel_id.to_owned() {
-        None => CosmosMsg::Bank(BankMsg::Send {
-            to_address: recipient_address.to_string(),
-            amount: vec![Coin { amount, denom }],
-        }),
-        Some(channel_id) => {
-            let timestamp = env
-                .block
-                .time
-                .plus_seconds(CONFIG.load(deps.storage)?.ibc_timeout);
-
-            CosmosMsg::Ibc(IbcMsg::Transfer {
-                channel_id,
-                to_address: recipient_address.to_string(),
-                amount: Coin { amount, denom },
-                timeout: IbcTimeout::with_timestamp(timestamp),
-            })
-        }
-    };
-
-    Ok(Response::new().add_message(msg).add_attributes(attributes))
-}
-
-fn parse_recipient_amount_denom(
-    result: &SubMsgResult,
-) -> Result<(String, Uint128, String), ContractError> {
     let res = result
         .to_owned()
         .into_result()
         .map_err(|e| ContractError::CustomError { val: e })?;
 
-    let event = res
-        .events
-        .iter()
-        .find(|x| x.ty.contains("coin_received"))
-        .ok_or(ContractError::EventIsNotFound)?;
+    let mut transfer_events: Vec<Event> = vec![];
 
-    let recipient = &event
-        .attributes
+    for event in res.events {
+        if event.ty.contains("transfer") {
+            for attr in &event.attributes {
+                if (attr.key == "recipient") && (attr.value == env.contract.address.as_ref()) {
+                    transfer_events.push(event.clone());
+                    break;
+                }
+            }
+        }
+    }
+
+    let event = transfer_events
         .last()
-        .ok_or(ContractError::AttributeIsNotFound)?
-        .value;
+        .ok_or(ContractError::EventIsNotFound)?;
 
     let coin_string = &event
         .attributes
-        .get(event.attributes.len() - 2)
+        .iter()
+        .find(|x| x.key == "amount")
         .ok_or(ContractError::AttributeIsNotFound)?
         .value;
 
     let Coin { denom, amount } = Coin::from_str(coin_string)
         .map_err(|e| ContractError::CustomError { val: e.to_string() })?;
 
-    Ok((recipient.to_string(), amount, denom))
+    let balance = deps
+        .querier
+        .query_balance(env.contract.address.as_str(), &denom)?;
+
+    if balance.amount < amount {
+        Err(ContractError::BalanceIsNotEnough {
+            symbol: denom.clone(),
+        })?;
+    }
+
+    Ok((
+        amount,
+        denom,
+        recipient_address.to_owned(),
+        channel_id.to_owned(),
+    ))
 }
 
 pub fn migrate_contract(

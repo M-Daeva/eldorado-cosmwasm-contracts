@@ -20,17 +20,13 @@ pub fn try_swap(
         amount: coins.to_owned(),
     });
 
-    let event_first = Event::new("coin_received")
-        .add_attribute(
-            "amount",
-            "25ibc/590CE97A3681BC2058FED1F69B613040209DF3F17B7BD31DFFB8671C4D2CD99B",
-        )
-        .add_attribute(
-            "receiver",
-            "kujira15e682nq9jees29rm9j3h030af86lq2qtlejgphlspzqcvs9whf2q00nua5",
-        )
+    let event_first = Event::new("transfer")
         .add_attribute("amount", coins[0].to_string())
-        .add_attribute("receiver", recipient);
+        .add_attribute("recipient", recipient)
+        .add_attribute(
+            "sender",
+            "kujira15e682nq9jees29rm9j3h030af86lq2qtlejgphlspzqcvs9whf2q00nua5",
+        );
 
     let event_last = Event::new("trade")
         .add_attribute("quote_amount", "2528")

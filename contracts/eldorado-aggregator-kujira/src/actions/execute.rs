@@ -15,14 +15,31 @@ use eldorado_base::{
 
 pub fn try_swap_in(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     vault_address: String,
     mantaswap_msg: mantaswap::msg::ExecuteMsg,
 ) -> Result<Response, ContractError> {
     let coin = one_coin(&info).map_err(|e| ContractError::CustomError { val: e.to_string() })?;
-    let wasm_msg = get_wasm_msg(&deps.as_ref(), &vault_address, &mantaswap_msg, &vec![coin])?;
+    let wasm_msg = get_wasm_msg(
+        &deps.as_ref(),
+        env.contract.address.as_str(),
+        &mantaswap_msg,
+        &vec![coin],
+    )?;
     let submsg = SubMsg::reply_on_success(CosmosMsg::Wasm(wasm_msg), SWAP_IN_REPLY);
+
+    RECIPIENT_PARAMETERS.update(
+        deps.storage,
+        |mut x| -> Result<Vec<RecipientParameters>, ContractError> {
+            x.push(RecipientParameters {
+                recipient_address: deps.api.addr_validate(&vault_address)?,
+                channel_id: None,
+            });
+
+            Ok(x)
+        },
+    )?;
 
     Ok(Response::new()
         .add_submessage(submsg)

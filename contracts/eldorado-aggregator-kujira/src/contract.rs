@@ -14,7 +14,7 @@ use eldorado_base::{
 use crate::actions::{
     execute::{try_swap_in, try_swap_out, try_update_config},
     instantiate::try_instantiate,
-    other::{add_attributes, migrate_contract, try_transfer},
+    other::{migrate_contract, swap_in_transfer, swap_out_transfer},
     query::query_config,
 };
 
@@ -68,8 +68,8 @@ pub fn reply(deps: DepsMut, env: Env, reply: Reply) -> Result<Response, Contract
     let Reply { id, result } = reply;
 
     match id {
-        SWAP_IN_REPLY => add_attributes(deps, env, &result),
-        SWAP_OUT_REPLY => try_transfer(deps, env, &result),
+        SWAP_IN_REPLY => swap_in_transfer(deps, env, &result),
+        SWAP_OUT_REPLY => swap_out_transfer(deps, env, &result),
         _ => Err(ContractError::UndefinedReplyId),
     }
 }
