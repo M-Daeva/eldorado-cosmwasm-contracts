@@ -6,7 +6,7 @@ use cosmwasm_std::{
 };
 
 use eldorado_base::{
-    eldorado_aggregator_kujira::{
+    eldorado_aggregator_osmosis::{
         msg::MigrateMsg,
         state::{CONFIG, RECIPIENT_PARAMETERS},
     },

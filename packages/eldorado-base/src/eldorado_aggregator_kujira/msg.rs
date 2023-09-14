@@ -17,7 +17,7 @@ pub enum ExecuteMsg {
         mantaswap_msg: mantaswap::msg::ExecuteMsg,
     },
     /// Called by vault to:
-    /// 1) swap native Kuji -> token on Kujira (or don't swap if Kuji is asked asset)
+    /// 1) swap native Kuji -> token on Kujira
     /// 2) send token on Kujira to user address on Kujira or other Cosmos network
     SwapOut {
         user_address: String,

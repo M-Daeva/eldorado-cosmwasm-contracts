@@ -31,6 +31,7 @@ anyhow = "1.0.71"
 cw-multi-test = "0.16.5"
 speculoos = "0.11.0"
 kujira = { git = "https://github.com/Team-Kujira/kujira-rs" }
+osmosis-std = "0.19.1"
 
 eldorado-base = { path = "./packages/eldorado-base" }
 mantaswap-mocks = { path = "./packages/mantaswap-mocks" }

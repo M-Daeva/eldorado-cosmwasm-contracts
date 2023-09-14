@@ -5,12 +5,12 @@ use cosmwasm_std::{
 use cw_utils::{must_pay, nonpayable, one_coin};
 
 use eldorado_base::{
-    eldorado_aggregator_kujira::{
-        state::{Config, CONFIG, DENOM_KUJI, RECIPIENT_PARAMETERS, SWAP_IN_REPLY, SWAP_OUT_REPLY},
-        types::RecipientParameters,
+    eldorado_aggregator_kujira::state::{
+        Config, CONFIG, DENOM_KUJI, RECIPIENT_PARAMETERS, SWAP_IN_REPLY, SWAP_OUT_REPLY,
     },
     error::ContractError,
     mantaswap,
+    types::RecipientParameters,
 };
 
 pub fn try_swap_in(
