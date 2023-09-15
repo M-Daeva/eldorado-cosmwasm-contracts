@@ -53,4 +53,11 @@ pub enum ContractError {
 
     #[error("Coin is not found!")]
     CoinIsNotFound,
+
+    // eldorado_aggregator_osmosis
+    #[error("Pools can not be parsed!")]
+    PoolsCanNotBeParsed,
+
+    #[error("Pool is not found!")]
+    PoolIsNotFound,
 }

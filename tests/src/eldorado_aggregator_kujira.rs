@@ -7,7 +7,7 @@ use kujira::Denom;
 use eldorado_base::{eldorado_aggregator_kujira::state::Config, mantaswap::msg::ExecuteMsg};
 
 use crate::helpers::{
-    eldorado_aggregator::EldoradoAggregatorExtension,
+    eldorado_aggregator_kujira::EldoradoAggregatorKujiraExtension,
     suite::core::Project,
     suite::types::{ProjectAccount, ProjectCoin, ToAddress},
 };
@@ -45,7 +45,7 @@ fn swap_in_default() {
         .unwrap();
 
     let res = project
-        .eldorado_aggregator_try_swap_in(
+        .eldorado_aggregator_kujira_try_swap_in(
             &ProjectAccount::Alice,
             &ProjectAccount::Bob,
             mantaswap_msg,
@@ -106,7 +106,7 @@ fn swap_in_without_funds() {
     };
 
     project
-        .eldorado_aggregator_try_swap_in::<u128>(
+        .eldorado_aggregator_kujira_try_swap_in::<u128>(
             &ProjectAccount::Alice,
             &ProjectAccount::Bob,
             mantaswap_msg,
@@ -134,7 +134,7 @@ fn swap_in_wrong_mantaswap_msg_type() {
     };
 
     project
-        .eldorado_aggregator_try_swap_in(
+        .eldorado_aggregator_kujira_try_swap_in(
             &ProjectAccount::Alice,
             &ProjectAccount::Bob,
             mantaswap_msg,
@@ -177,7 +177,7 @@ fn swap_out_default() {
         .unwrap();
 
     project
-        .eldorado_aggregator_try_swap_out(
+        .eldorado_aggregator_kujira_try_swap_out(
             &ProjectAccount::Bob,
             &ProjectAccount::Alice,
             mantaswap_msg,
@@ -243,7 +243,7 @@ fn swap_out_multiple_swaps() {
 
     for (sender, recipient) in sender_recipient_list.clone() {
         project
-            .eldorado_aggregator_try_swap_out(
+            .eldorado_aggregator_kujira_try_swap_out(
                 sender,
                 recipient,
                 mantaswap_msg,
@@ -258,7 +258,7 @@ fn swap_out_multiple_swaps() {
         project.wait(100_000);
 
         project
-            .eldorado_aggregator_try_swap_out(
+            .eldorado_aggregator_kujira_try_swap_out(
                 sender,
                 recipient,
                 mantaswap_msg,
@@ -316,7 +316,7 @@ fn swap_out_wrong_denom_in() {
     };
 
     project
-        .eldorado_aggregator_try_swap_out(
+        .eldorado_aggregator_kujira_try_swap_out(
             &ProjectAccount::Bob,
             &ProjectAccount::Alice,
             mantaswap_msg,
@@ -360,7 +360,7 @@ fn swap_out_ibc_token_without_ibc_channel() {
         .unwrap();
 
     project
-        .eldorado_aggregator_try_swap_out(
+        .eldorado_aggregator_kujira_try_swap_out(
             &ProjectAccount::Bob,
             &ProjectAccount::Alice,
             mantaswap_msg,
@@ -408,7 +408,7 @@ fn swap_out_ibc_channel_without_ibc_token() {
     };
 
     project
-        .eldorado_aggregator_try_swap_out(
+        .eldorado_aggregator_kujira_try_swap_out(
             &ProjectAccount::Bob,
             &ProjectAccount::Alice,
             mantaswap_msg,
@@ -447,7 +447,7 @@ fn swap_out_ibc_channel_with_ibc_token() {
     };
 
     project
-        .eldorado_aggregator_try_swap_out(
+        .eldorado_aggregator_kujira_try_swap_out(
             &ProjectAccount::Bob,
             &ProjectAccount::Alice,
             mantaswap_msg,
@@ -462,10 +462,10 @@ fn swap_out_ibc_channel_with_ibc_token() {
 fn update_config_default() {
     let mut project = Project::new();
 
-    let config_before = project.eldorado_aggregator_query_config().unwrap();
+    let config_before = project.eldorado_aggregator_kujira_query_config().unwrap();
 
     project
-        .eldorado_aggregator_try_update_config::<u128>(
+        .eldorado_aggregator_kujira_try_update_config::<u128>(
             &ProjectAccount::Admin,
             &Some(5),
             &Some(&ProjectAccount::Owner),
@@ -474,7 +474,7 @@ fn update_config_default() {
         )
         .unwrap();
 
-    let config_after = project.eldorado_aggregator_query_config().unwrap();
+    let config_after = project.eldorado_aggregator_kujira_query_config().unwrap();
 
     assert_that(&config_before).is_equal_to(&Config {
         admin: ProjectAccount::Admin.to_address(),
@@ -495,7 +495,7 @@ fn update_config_unauthorized() {
     let mut project = Project::new();
 
     project
-        .eldorado_aggregator_try_update_config::<u128>(
+        .eldorado_aggregator_kujira_try_update_config::<u128>(
             &ProjectAccount::Alice,
             &Some(5),
             &Some(&ProjectAccount::Owner),
@@ -511,7 +511,7 @@ fn update_config_with_funds() {
     let mut project = Project::new();
 
     project
-        .eldorado_aggregator_try_update_config::<u128>(
+        .eldorado_aggregator_kujira_try_update_config::<u128>(
             &ProjectAccount::Admin,
             &Some(5),
             &Some(&ProjectAccount::Owner),

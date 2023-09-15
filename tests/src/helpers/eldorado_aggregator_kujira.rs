@@ -14,8 +14,8 @@ use eldorado_base::{
     mantaswap,
 };
 
-pub trait EldoradoAggregatorExtension {
-    fn eldorado_aggregator_try_swap_in<T>(
+pub trait EldoradoAggregatorKujiraExtension {
+    fn eldorado_aggregator_kujira_try_swap_in<T>(
         &mut self,
         sender: &ProjectAccount,
         vault_address: &ProjectAccount,
@@ -27,7 +27,7 @@ pub trait EldoradoAggregatorExtension {
         Uint128: From<T>,
         T: Clone;
 
-    fn eldorado_aggregator_try_swap_out<T>(
+    fn eldorado_aggregator_kujira_try_swap_out<T>(
         &mut self,
         sender: &ProjectAccount,
         user_address: &ProjectAccount,
@@ -41,7 +41,7 @@ pub trait EldoradoAggregatorExtension {
         T: Clone;
 
     #[allow(clippy::too_many_arguments)]
-    fn eldorado_aggregator_try_update_config<T>(
+    fn eldorado_aggregator_kujira_try_update_config<T>(
         &mut self,
         sender: &ProjectAccount,
         ibc_timeout_in_mins: &Option<u8>,
@@ -53,12 +53,12 @@ pub trait EldoradoAggregatorExtension {
         Uint128: From<T>,
         T: Clone;
 
-    fn eldorado_aggregator_query_config(&self) -> StdResult<Config>;
+    fn eldorado_aggregator_kujira_query_config(&self) -> StdResult<Config>;
 }
 
-impl EldoradoAggregatorExtension for Project {
+impl EldoradoAggregatorKujiraExtension for Project {
     #[track_caller]
-    fn eldorado_aggregator_try_swap_in<T>(
+    fn eldorado_aggregator_kujira_try_swap_in<T>(
         &mut self,
         sender: &ProjectAccount,
         vault_address: &ProjectAccount,
@@ -82,7 +82,7 @@ impl EldoradoAggregatorExtension for Project {
         self.app
             .execute_contract(
                 sender.to_address(),
-                self.get_eldorado_aggregator_address(),
+                self.get_eldorado_aggregator_kujira_address(),
                 &ExecuteMsg::SwapIn {
                     vault_address: vault_address.to_string(),
                     mantaswap_msg: mantaswap_msg.to_owned(),
@@ -93,7 +93,7 @@ impl EldoradoAggregatorExtension for Project {
     }
 
     #[track_caller]
-    fn eldorado_aggregator_try_swap_out<T>(
+    fn eldorado_aggregator_kujira_try_swap_out<T>(
         &mut self,
         sender: &ProjectAccount,
         user_address: &ProjectAccount,
@@ -118,7 +118,7 @@ impl EldoradoAggregatorExtension for Project {
         self.app
             .execute_contract(
                 sender.to_address(),
-                self.get_eldorado_aggregator_address(),
+                self.get_eldorado_aggregator_kujira_address(),
                 &ExecuteMsg::SwapOut {
                     user_address: user_address.to_string(),
                     mantaswap_msg: mantaswap_msg.to_owned(),
@@ -130,7 +130,7 @@ impl EldoradoAggregatorExtension for Project {
     }
 
     #[track_caller]
-    fn eldorado_aggregator_try_update_config<T>(
+    fn eldorado_aggregator_kujira_try_update_config<T>(
         &mut self,
         sender: &ProjectAccount,
         ibc_timeout_in_mins: &Option<u8>,
@@ -154,7 +154,7 @@ impl EldoradoAggregatorExtension for Project {
         self.app
             .execute_contract(
                 sender.to_address(),
-                self.get_eldorado_aggregator_address(),
+                self.get_eldorado_aggregator_kujira_address(),
                 &ExecuteMsg::UpdateConfig {
                     ibc_timeout_in_mins: ibc_timeout_in_mins.to_owned(),
                     router_address: Some(router_address.unwrap().to_string()),
@@ -165,9 +165,9 @@ impl EldoradoAggregatorExtension for Project {
     }
 
     #[track_caller]
-    fn eldorado_aggregator_query_config(&self) -> StdResult<Config> {
+    fn eldorado_aggregator_kujira_query_config(&self) -> StdResult<Config> {
         self.app.wrap().query_wasm_smart(
-            self.get_eldorado_aggregator_address(),
+            self.get_eldorado_aggregator_kujira_address(),
             &QueryMsg::QueryConfig {},
         )
     }

@@ -27,8 +27,11 @@ anyhow = { workspace = true }
 cw-multi-test = { workspace = true }
 speculoos = { workspace = true }
 kujira = { workspace = true }
+osmosis-std = { workspace = true }
 
 eldorado-base = { workspace = true }
 mantaswap-mocks = { workspace = true }
 
 eldorado-aggregator-kujira = { workspace = true }
+eldorado-aggregator-osmosis = { workspace = true }
+

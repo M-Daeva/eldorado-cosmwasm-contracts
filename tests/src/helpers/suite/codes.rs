@@ -4,26 +4,31 @@ use cw_multi_test::ContractWrapper;
 use crate::helpers::suite::core::Project;
 
 pub trait WithCodes {
-    // store
-    // packages
+    // store packages
     fn store_mantaswap_mocks_code(&mut self) -> u64;
 
-    // contracts
-    fn store_eldorado_aggregator_code(&mut self) -> u64;
+    // store contracts
+    fn store_eldorado_aggregator_kujira_code(&mut self) -> u64;
+    fn store_eldorado_aggregator_osmosis_code(&mut self) -> u64;
 
-    // instantiate
-    // packages
+    // instantiate packages
     fn instantiate_mantaswap_mocks(&mut self, mantaswap_mocks_code_id: u64) -> Addr;
 
-    // contracts
-    fn instantiate_eldorado_aggregator(
+    // instantiate contracts
+    fn instantiate_eldorado_aggregator_kujira(
         &mut self,
-        eldorado_aggregator_code_id: u64,
+        eldorado_aggregator_kujira_code_id: u64,
         router_address: &Addr,
+    ) -> Addr;
+
+    fn instantiate_eldorado_aggregator_osmosis(
+        &mut self,
+        eldorado_aggregator_osmosis_code_id: u64,
     ) -> Addr;
 }
 
 impl WithCodes for Project {
+    // store packages
     fn store_mantaswap_mocks_code(&mut self) -> u64 {
         self.app.store_code(Box::new(ContractWrapper::new(
             mantaswap_mocks::contract::execute,
@@ -32,7 +37,8 @@ impl WithCodes for Project {
         )))
     }
 
-    fn store_eldorado_aggregator_code(&mut self) -> u64 {
+    // store contracts
+    fn store_eldorado_aggregator_kujira_code(&mut self) -> u64 {
         self.app.store_code(Box::new(
             ContractWrapper::new(
                 eldorado_aggregator_kujira::contract::execute,
@@ -43,6 +49,18 @@ impl WithCodes for Project {
         ))
     }
 
+    fn store_eldorado_aggregator_osmosis_code(&mut self) -> u64 {
+        self.app.store_code(Box::new(
+            ContractWrapper::new(
+                eldorado_aggregator_osmosis::contract::execute,
+                eldorado_aggregator_osmosis::contract::instantiate,
+                eldorado_aggregator_osmosis::contract::query,
+            )
+            .with_reply(eldorado_aggregator_osmosis::contract::reply),
+        ))
+    }
+
+    // instantiate packages
     fn instantiate_mantaswap_mocks(&mut self, mantaswap_mocks_code_id: u64) -> Addr {
         let addr = "contract42";
 
@@ -58,17 +76,29 @@ impl WithCodes for Project {
         )
     }
 
-    fn instantiate_eldorado_aggregator(
+    // instantiate contracts
+    fn instantiate_eldorado_aggregator_kujira(
         &mut self,
-        eldorado_aggregator_code_id: u64,
+        eldorado_aggregator_kujira_code_id: u64,
         router_address: &Addr,
     ) -> Addr {
         self.instantiate_contract(
-            eldorado_aggregator_code_id,
-            "eldorado_aggregator",
+            eldorado_aggregator_kujira_code_id,
+            "eldorado_aggregator_kujira",
             &eldorado_base::eldorado_aggregator_kujira::msg::InstantiateMsg {
                 router_address: router_address.to_string(),
             },
+        )
+    }
+
+    fn instantiate_eldorado_aggregator_osmosis(
+        &mut self,
+        eldorado_aggregator_osmosis_code_id: u64,
+    ) -> Addr {
+        self.instantiate_contract(
+            eldorado_aggregator_osmosis_code_id,
+            "eldorado_aggregator_osmosis",
+            &eldorado_base::eldorado_aggregator_osmosis::msg::InstantiateMsg {},
         )
     }
 }

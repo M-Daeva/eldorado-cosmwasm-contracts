@@ -10,7 +10,6 @@ pub enum ExecuteMsg {
     /// 2) send native Osmo to vault
     SwapIn {
         vault_address: String, // must be passed every time to ensure its actuality
-        denom_out: String,
     },
     /// Called by vault to:
     /// 1) swap native Osmo -> token on Osmosis

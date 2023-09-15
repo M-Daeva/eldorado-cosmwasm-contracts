@@ -37,3 +37,5 @@ eldorado-base = { path = "./packages/eldorado-base" }
 mantaswap-mocks = { path = "./packages/mantaswap-mocks" }
 
 eldorado-aggregator-kujira = { path = "./contracts/eldorado-aggregator-kujira" }
+eldorado-aggregator-osmosis = { path = "./contracts/eldorado-aggregator-osmosis" }
+

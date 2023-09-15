@@ -19,13 +19,15 @@ pub struct Project {
     mantaswap_mocks_code_id: u64,
 
     // contract code id
-    eldorado_aggregator_code_id: u64,
+    eldorado_aggregator_kujira_code_id: u64,
+    eldorado_aggregator_osmosis_code_id: u64,
 
     // package address
     mantaswap_router_address: Addr,
 
     // contract address
-    eldorado_aggregator_address: Addr,
+    eldorado_aggregator_kujira_address: Addr,
+    eldorado_aggregator_osmosis_address: Addr,
 }
 
 impl Project {
@@ -37,11 +39,13 @@ impl Project {
 
             mantaswap_mocks_code_id: 0,
 
-            eldorado_aggregator_code_id: 0,
+            eldorado_aggregator_kujira_code_id: 0,
+            eldorado_aggregator_osmosis_code_id: 0,
 
             mantaswap_router_address: Addr::unchecked(""),
 
-            eldorado_aggregator_address: Addr::unchecked(""),
+            eldorado_aggregator_kujira_address: Addr::unchecked(""),
+            eldorado_aggregator_osmosis_address: Addr::unchecked(""),
         }
     }
 
@@ -54,15 +58,19 @@ impl Project {
         let mantaswap_mocks_code_id = project.store_mantaswap_mocks_code();
 
         // contracts
-        let eldorado_aggregator_code_id = project.store_eldorado_aggregator_code();
+        let eldorado_aggregator_kujira_code_id = project.store_eldorado_aggregator_kujira_code();
+        let eldorado_aggregator_osmosis_code_id = project.store_eldorado_aggregator_osmosis_code();
 
         let mantaswap_router_address = project.instantiate_mantaswap_mocks(mantaswap_mocks_code_id);
 
         // instantiate contracts
-        let eldorado_aggregator_address = project.instantiate_eldorado_aggregator(
-            eldorado_aggregator_code_id,
+        let eldorado_aggregator_kujira_address = project.instantiate_eldorado_aggregator_kujira(
+            eldorado_aggregator_kujira_code_id,
             &mantaswap_router_address,
         );
+
+        let eldorado_aggregator_osmosis_address =
+            project.instantiate_eldorado_aggregator_osmosis(eldorado_aggregator_osmosis_code_id);
 
         // add funds to mantaswap router
         for project_coin in ProjectCoin::iter() {
@@ -84,27 +92,37 @@ impl Project {
         Self {
             mantaswap_mocks_code_id,
 
-            eldorado_aggregator_code_id,
+            eldorado_aggregator_kujira_code_id,
+            eldorado_aggregator_osmosis_code_id,
 
             mantaswap_router_address,
 
-            eldorado_aggregator_address,
+            eldorado_aggregator_kujira_address,
+            eldorado_aggregator_osmosis_address,
 
             ..project
         }
     }
 
     // code id getters
-    pub fn get_eldorado_aggregator_code_id(&self) -> u64 {
-        self.eldorado_aggregator_code_id
+    pub fn get_eldorado_aggregator_kujira_code_id(&self) -> u64 {
+        self.eldorado_aggregator_kujira_code_id
+    }
+
+    pub fn get_eldorado_aggregator_osmosis_code_id(&self) -> u64 {
+        self.eldorado_aggregator_osmosis_code_id
     }
 
     pub fn get_mantaswap_router_address(&self) -> Addr {
         self.mantaswap_router_address.clone()
     }
 
-    pub fn get_eldorado_aggregator_address(&self) -> Addr {
-        self.eldorado_aggregator_address.clone()
+    pub fn get_eldorado_aggregator_kujira_address(&self) -> Addr {
+        self.eldorado_aggregator_kujira_address.clone()
+    }
+
+    pub fn get_eldorado_aggregator_osmosis_address(&self) -> Addr {
+        self.eldorado_aggregator_osmosis_address.clone()
     }
 
     // utils

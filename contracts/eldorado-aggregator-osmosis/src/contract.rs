@@ -38,10 +38,7 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::SwapIn {
-            vault_address,
-            denom_out,
-        } => try_swap_in(deps, env, info, vault_address, denom_out),
+        ExecuteMsg::SwapIn { vault_address } => try_swap_in(deps, env, info, vault_address),
         ExecuteMsg::SwapOut {
             user_address,
             denom_out,
