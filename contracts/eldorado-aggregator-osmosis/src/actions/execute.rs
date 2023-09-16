@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use cosmwasm_std::{CosmosMsg, Deps, DepsMut, Env, MessageInfo, Response, SubMsg, Uint128};
 
 use osmosis_std::types::{
@@ -12,8 +14,9 @@ use cw_utils::{must_pay, nonpayable, one_coin};
 
 use eldorado_base::{
     converters::{str_to_dec, u128_to_dec},
-    eldorado_aggregator_osmosis::state::{
-        Config, CONFIG, DENOM_OSMO, RECIPIENT_PARAMETERS, SWAP_IN_REPLY, SWAP_OUT_REPLY,
+    eldorado_aggregator_osmosis::{
+        state::{Config, CONFIG, DENOM_OSMO, RECIPIENT_PARAMETERS, SWAP_IN_REPLY, SWAP_OUT_REPLY},
+        types::PairInfo,
     },
     error::ContractError,
     types::RecipientParameters,
@@ -117,51 +120,53 @@ fn get_swap_msg(
     denom_out: &str,
 ) -> Result<CosmosMsg, ContractError> {
     let pools = query_pools(deps.to_owned(), env.to_owned())?;
-    let pool = pools
-        .iter()
-        .find(|x| {
-            let mut denom_pair_list: Vec<String> = vec![];
 
-            for PoolAsset { token, .. } in &x.pool_assets {
-                if let Some(Coin { denom, .. }) = token {
-                    denom_pair_list.push(denom.to_string());
+    let mut target_pool: Option<PairInfo> = None;
+
+    for pool in pools {
+        let mut asset_in_amount = Uint128::zero();
+        let mut asset_out_amount = Uint128::zero();
+        let mut osmo_amount = Uint128::zero();
+
+        for PoolAsset { token, .. } in &pool.pool_assets {
+            if let Some(Coin { denom, amount }) = token {
+                if denom == denom_in {
+                    asset_in_amount = Uint128::from_str(amount)?;
+                } else if denom == denom_out {
+                    asset_out_amount = Uint128::from_str(amount)?;
+                }
+
+                if denom == DENOM_OSMO {
+                    osmo_amount = Uint128::from_str(amount)?;
                 }
             }
+        }
 
-            denom_pair_list.contains(&denom_in.to_string())
-                && denom_pair_list.contains(&denom_out.to_string())
-        })
-        .ok_or(ContractError::PoolIsNotFound)?;
+        if !asset_in_amount.is_zero()
+            && !asset_out_amount.is_zero()
+            && (osmo_amount
+                > target_pool
+                    .clone()
+                    .map_or(Uint128::zero(), |x| x.osmo_amount))
+        {
+            target_pool = Some(PairInfo {
+                pool_id: pool.id,
+                asset_in_amount,
+                asset_out_amount,
+                osmo_amount,
+            });
+        }
+    }
 
-    let asset1 = &pool
-        .pool_assets
-        .get(0)
-        .ok_or(ContractError::PoolIsNotFound)?
-        .token
-        .clone()
-        .ok_or(ContractError::CoinIsNotFound)?;
-
-    let asset2 = &pool
-        .pool_assets
-        .get(1)
-        .ok_or(ContractError::PoolIsNotFound)?
-        .token
-        .clone()
-        .ok_or(ContractError::CoinIsNotFound)?;
-
-    let (asset_in, asset_out) = if asset1.denom == denom_in {
-        (asset1, asset2)
-    } else {
-        (asset2, asset1)
-    };
+    let pair = target_pool.ok_or(ContractError::PoolIsNotFound)?;
 
     let token_out_min_amount = (str_to_dec("0.9")
         * u128_to_dec(amount_in)
-        * (str_to_dec(&asset_out.amount) / str_to_dec(&asset_in.amount)))
+        * (u128_to_dec(pair.asset_out_amount) / u128_to_dec(pair.asset_in_amount)))
     .to_string();
 
     let routes = vec![SwapAmountInRoute {
-        pool_id: pool.id,
+        pool_id: pair.pool_id,
         token_out_denom: denom_out.to_string(),
     }];
 
