@@ -38,12 +38,15 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::SwapIn { vault_address } => try_swap_in(deps, env, info, vault_address),
+        ExecuteMsg::SwapIn {
+            vault_address,
+            pool_id,
+        } => try_swap_in(deps, env, info, vault_address, pool_id),
         ExecuteMsg::SwapOut {
             user_address,
-            denom_out,
+            pool_id,
             channel_id,
-        } => try_swap_out(deps, env, info, user_address, denom_out, channel_id),
+        } => try_swap_out(deps, env, info, user_address, pool_id, channel_id),
         ExecuteMsg::UpdateConfig {
             ibc_timeout_in_mins,
         } => try_update_config(deps, env, info, ibc_timeout_in_mins),

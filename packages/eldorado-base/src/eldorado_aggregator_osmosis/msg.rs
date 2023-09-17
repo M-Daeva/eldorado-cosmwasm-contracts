@@ -10,13 +10,14 @@ pub enum ExecuteMsg {
     /// 2) send native Osmo to vault
     SwapIn {
         vault_address: String, // must be passed every time to ensure its actuality
+        pool_id: u64,
     },
     /// Called by vault to:
     /// 1) swap native Osmo -> token on Osmosis
     /// 2) send token on Osmosis to user address on Osmosis or other Cosmos network
     SwapOut {
         user_address: String,
-        denom_out: String,
+        pool_id: u64,
         channel_id: Option<String>, // must be specified to enable IBC transfer
     },
     /// Called by admin

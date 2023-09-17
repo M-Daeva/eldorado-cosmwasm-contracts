@@ -22,9 +22,15 @@
           "swap_in": {
             "type": "object",
             "required": [
+              "pool_id",
               "vault_address"
             ],
             "properties": {
+              "pool_id": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              },
               "vault_address": {
                 "type": "string"
               }
@@ -44,7 +50,7 @@
           "swap_out": {
             "type": "object",
             "required": [
-              "denom_out",
+              "pool_id",
               "user_address"
             ],
             "properties": {
@@ -54,8 +60,10 @@
                   "null"
                 ]
               },
-              "denom_out": {
-                "type": "string"
+              "pool_id": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
               },
               "user_address": {
                 "type": "string"

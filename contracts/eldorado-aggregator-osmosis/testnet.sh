@@ -24,7 +24,7 @@ KEYRING_PASSWORD="12345678"
 
 
 # instantiate smart contract
-CONTRACT_CODE="4249" # tx_hash: 6E2278989A4AE4595D50CD034F88DBA594673D2CD8DDD03B8D859DC877DBC0EF
+CONTRACT_CODE="4261" # tx_hash: E67BADEC801E6479EE30843FF8C4CF3D2DE3B1B4E14A2D62C169BDD091159C18
 # INIT="{}"
 # yes $KEYRING_PASSWORD | $DAEMON tx wasm instantiate $CONTRACT_CODE "$INIT" --from "dapp" --label "$DIR_NAME_SNAKE-dev" $TXFLAG --admin $DAPP_ADDRESS
 
@@ -33,15 +33,15 @@ CONTRACT_CODE="4249" # tx_hash: 6E2278989A4AE4595D50CD034F88DBA594673D2CD8DDD03B
 
 
 # write data to file
-CONTRACT_ADDRESS="osmo1j6v7z76em9ye5jcee22agw9j6g5tmqk7nyg6vcy5cmyk406wgrnq8u0ujc" # tx_hash: 3CF15FEA102835EDDDFAA4E7371FC0B51EB06815707361A98CCC4CF167D8A0FF
+CONTRACT_ADDRESS="osmo17xvvelv6wmqvrjehn6d5kdsm4xymgux3g67sfd3ajnknzuatwffs0ehaw8" # tx_hash: 0A237B159874470BEDD006A771ED7764C4D2CD65F3359727F4EAAE217D4A07EF
 
-R="{
-\"PREFIX\":\"$PREFIX\",
-\"CHAIN_ID\":\"$CHAIN_ID\",
-\"RPC\":\"$RPC\",
-\"CONTRACT_CODE\":\"$CONTRACT_CODE\",
-\"CONTRACT_ADDRESS\":\"$CONTRACT_ADDRESS\"
-}"
+# R="{
+# \"PREFIX\":\"$PREFIX\",
+# \"CHAIN_ID\":\"$CHAIN_ID\",
+# \"RPC\":\"$RPC\",
+# \"CONTRACT_CODE\":\"$CONTRACT_CODE\",
+# \"CONTRACT_ADDRESS\":\"$CONTRACT_ADDRESS\"
+# }"
 
 # echo $R > "../../config/${DAEMON::-1}-testnet-config.json"
 
@@ -51,11 +51,17 @@ R="{
 # CONFIG=$($DAEMON q wasm contract-state smart $CONTRACT_ADDRESS "$CONFIG_QUERY_MSG" --node $RPC --chain-id $CHAIN_ID --output json)
 # echo $CONFIG
 
+# # tx_hash: 2E2E3E8999AB3EAD3DF3966C8E2827EE068C7EF95BA109EF46050F6D9B5846DC
+# ATOM="ibc/B28CFD38D84A480EF2A03AC575DCB05004D934A603A5A642888847BCDA6340C0"
+# SWAP_RES=$(yes $KEYRING_PASSWORD | $DAEMON tx gamm swap-exact-amount-in "100$ATOM" "1" --swap-route-denoms "uosmo" --swap-route-pool-ids 151 --from=$(echo $DAPP_ADDRESS) $TXFLAG --output json)
+# echo $SWAP_RES
 
 # Execute SwapIn to swap 0.0001 ATOM -> OSMO and send to vault with memo
 # tx_hash: 
 # 1) add vault address to compose 'SWAP_IN_MSG'
-SWAP_IN_MSG="{\"swap_in\":{\"vault_address\":\"$VAULT_ADDRESS\"}}"
+POOL_ID=151
+SWAP_IN_MSG="{\"swap_in\":{\"vault_address\":\"$VAULT_ADDRESS\",\"pool_id\":$POOL_ID}}"
+echo $SWAP_IN_MSG
 # 2) add funds (get denom by symbol here https://raw.githubusercontent.com/osmosis-labs/assetlists/main/osmosis-1/osmosis-1.assetlist.json)
 # mainnet: FUNDS="100ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"
 # testnet:
@@ -66,16 +72,16 @@ SWAP_IN_RES=$(yes $KEYRING_PASSWORD | $DAEMON tx wasm execute $CONTRACT_ADDRESS 
 echo $SWAP_IN_RES
 
 
-# Execute SwapOut to swap 0.0001 OSMO -> ATOM and send to user
-# tx_hash: 
-# For SwapOut we have same steps but added optional IBC channel_id parameter required to transfer IBC token
-# to native network. It also can be found here https://raw.githubusercontent.com/osmosis-labs/assetlists/main/osmosis-1/osmosis-1.assetlist.json
-# For example we have 'uatom' on Osmosis with IBC denom 'ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2'
-# The channel_id is 'channel-0'.
-# There is no infra for IBC transfer on testnet. Then skip channel_id parameter
-DENOM_OUT="ibc/B28CFD38D84A480EF2A03AC575DCB05004D934A603A5A642888847BCDA6340C0"
-SWAP_OUT_MSG="{\"swap_out\":{\"user_address\":\"$VAULT_ADDRESS\",\"denom_out\":$DENOM_OUT}}"
-FUNDS="100uosmo"
-SWAP_OUT_RES=$(yes $KEYRING_PASSWORD | $DAEMON tx wasm execute $CONTRACT_ADDRESS "$SWAP_OUT_MSG" --from=$(echo $DAPP_ADDRESS) --amount "$FUNDS" $TXFLAG --output json)
-echo $SWAP_OUT_RES
+# # Execute SwapOut to swap 0.0001 OSMO -> ATOM and send to user
+# # tx_hash: 
+# # For SwapOut we have same steps but added optional IBC channel_id parameter required to transfer IBC token
+# # to native network. It also can be found here https://raw.githubusercontent.com/osmosis-labs/assetlists/main/osmosis-1/osmosis-1.assetlist.json
+# # For example we have 'uatom' on Osmosis with IBC denom 'ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2'
+# # The channel_id is 'channel-0'.
+# # There is no infra for IBC transfer on testnet. Then skip channel_id parameter
+# DENOM_OUT="ibc/B28CFD38D84A480EF2A03AC575DCB05004D934A603A5A642888847BCDA6340C0"
+# SWAP_OUT_MSG="{\"swap_out\":{\"user_address\":\"$VAULT_ADDRESS\",\"denom_out\":$DENOM_OUT}}"
+# FUNDS="100uosmo"
+# SWAP_OUT_RES=$(yes $KEYRING_PASSWORD | $DAEMON tx wasm execute $CONTRACT_ADDRESS "$SWAP_OUT_MSG" --from=$(echo $DAPP_ADDRESS) --amount "$FUNDS" $TXFLAG --output json)
+# echo $SWAP_OUT_RES
 

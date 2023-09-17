@@ -1,19 +1,18 @@
 use cosmwasm_std::{Deps, Env, StdResult};
 
-use osmosis_std::types::osmosis::gamm::v1beta1::{GammQuerier, Pool};
+use osmosis_std::types::osmosis::{gamm::v1beta1::Pool, poolmanager::v1beta1::PoolmanagerQuerier};
 
 use eldorado_base::{
     eldorado_aggregator_osmosis::state::{Config, CONFIG},
     error::{to_std_err, ContractError},
 };
 
-pub fn query_pools(deps: Deps, _env: Env) -> StdResult<Vec<Pool>> {
-    GammQuerier::new(&deps.querier)
-        .pools(None)?
-        .pools
-        .into_iter()
-        .map(|x| x.try_into())
-        .collect::<Result<Vec<Pool>, _>>()
+pub fn query_pool(deps: Deps, _env: Env, pool_id: u64) -> StdResult<Pool> {
+    PoolmanagerQuerier::new(&deps.querier)
+        .pool(pool_id)?
+        .pool
+        .ok_or(to_std_err(ContractError::PoolIsNotFound))?
+        .try_into()
         .map_err(|_| to_std_err(ContractError::PoolsCanNotBeParsed))
 }
 
