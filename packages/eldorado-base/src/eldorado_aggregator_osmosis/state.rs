@@ -5,7 +5,8 @@ use cw_storage_plus::Item;
 use crate::types::RecipientParameters;
 
 pub const TIMEOUT_IN_MINS: u8 = 15;
-pub const DENOM_OSMO: &str = "uosmo";
+pub const BASE_DENOM: &str = "uosmo";
+pub const BASE_PREFIX: &str = "osmo";
 
 pub const SWAP_IN_REPLY: u64 = 1;
 pub const SWAP_OUT_REPLY: u64 = 2;

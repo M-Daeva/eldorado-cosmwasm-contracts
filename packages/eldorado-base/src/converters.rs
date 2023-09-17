@@ -1,6 +1,8 @@
-use cosmwasm_std::{Decimal, Decimal256, Uint128};
+use cosmwasm_std::{Decimal, Decimal256, StdError, StdResult, Uint128};
 
 use std::str::FromStr;
+
+use bech32::{decode, encode, Variant};
 
 pub fn str_to_dec(s: &str) -> Decimal {
     Decimal::from_str(s).unwrap()
@@ -55,4 +57,11 @@ pub fn u128_vec_to_uint128_vec(u128_vec: &[u128]) -> Vec<Uint128> {
         .iter()
         .map(|&x| Uint128::from(x))
         .collect::<Vec<Uint128>>()
+}
+
+pub fn get_addr_by_prefix(address: &str, prefix: &str) -> StdResult<String> {
+    let (_hrp, data, _) = decode(address).map_err(|e| StdError::generic_err(e.to_string()))?;
+    let new_address =
+        encode(prefix, data, Variant::Bech32).map_err(|e| StdError::generic_err(e.to_string()))?;
+    Ok(new_address)
 }

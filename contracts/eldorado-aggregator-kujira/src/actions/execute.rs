@@ -1,12 +1,14 @@
 use cosmwasm_std::{
-    to_binary, Coin, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Response, SubMsg, WasmMsg,
+    to_binary, Addr, Coin, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Response, SubMsg, WasmMsg,
 };
 
 use cw_utils::{must_pay, nonpayable, one_coin};
 
 use eldorado_base::{
+    converters::get_addr_by_prefix,
     eldorado_aggregator_kujira::state::{
-        Config, CONFIG, DENOM_KUJI, RECIPIENT_PARAMETERS, SWAP_IN_REPLY, SWAP_OUT_REPLY,
+        Config, BASE_DENOM, BASE_PREFIX, CHAIN_ID_DEV, CONFIG, RECIPIENT_PARAMETERS, SWAP_IN_REPLY,
+        SWAP_OUT_REPLY,
     },
     error::ContractError,
     mantaswap,
@@ -22,24 +24,14 @@ pub fn try_swap_in(
 ) -> Result<Response, ContractError> {
     let coin = one_coin(&info).map_err(|e| ContractError::CustomError { val: e.to_string() })?;
     let wasm_msg = get_wasm_msg(
-        &deps.as_ref(),
-        env.contract.address.as_str(),
+        deps,
+        &env,
+        &vault_address,
         &mantaswap_msg,
         &vec![coin],
+        &None,
     )?;
     let submsg = SubMsg::reply_on_success(CosmosMsg::Wasm(wasm_msg), SWAP_IN_REPLY);
-
-    RECIPIENT_PARAMETERS.update(
-        deps.storage,
-        |mut x| -> Result<Vec<RecipientParameters>, ContractError> {
-            x.push(RecipientParameters {
-                recipient_address: deps.api.addr_validate(&vault_address)?,
-                channel_id: None,
-            });
-
-            Ok(x)
-        },
-    )?;
 
     Ok(Response::new()
         .add_submessage(submsg)
@@ -54,33 +46,21 @@ pub fn try_swap_out(
     mantaswap_msg: mantaswap::msg::ExecuteMsg,
     channel_id: Option<String>,
 ) -> Result<Response, ContractError> {
-    verify_ibc_parameters(&mantaswap_msg, &channel_id)?;
-
-    let amount = must_pay(&info, DENOM_KUJI)
+    let amount = must_pay(&info, BASE_DENOM)
         .map_err(|e| ContractError::CustomError { val: e.to_string() })?;
     let coin = Coin {
-        denom: DENOM_KUJI.to_string(),
+        denom: BASE_DENOM.to_string(),
         amount,
     };
     let wasm_msg = get_wasm_msg(
-        &deps.as_ref(),
-        env.contract.address.as_str(),
+        deps,
+        &env,
+        &user_address,
         &mantaswap_msg,
         &vec![coin],
+        &channel_id,
     )?;
     let submsg = SubMsg::reply_on_success(CosmosMsg::Wasm(wasm_msg), SWAP_OUT_REPLY);
-
-    RECIPIENT_PARAMETERS.update(
-        deps.storage,
-        |mut x| -> Result<Vec<RecipientParameters>, ContractError> {
-            x.push(RecipientParameters {
-                recipient_address: deps.api.addr_validate(&user_address)?,
-                channel_id,
-            });
-
-            Ok(x)
-        },
-    )?;
 
     Ok(Response::new()
         .add_submessage(submsg)
@@ -123,22 +103,37 @@ pub fn try_update_config(
 }
 
 fn get_wasm_msg(
-    deps: &Deps,
+    deps: DepsMut,
+    env: &Env,
     recipient_address: &str,
     mantaswap_msg: &mantaswap::msg::ExecuteMsg,
     funds: &Vec<Coin>,
+    channel_id: &Option<String>,
 ) -> Result<WasmMsg, ContractError> {
-    let recipient = deps.api.addr_validate(recipient_address)?;
     let router = CONFIG.load(deps.storage)?.router;
+
+    let recipient_address = verify_ibc_parameters(
+        deps.as_ref(),
+        env,
+        mantaswap_msg,
+        channel_id,
+        recipient_address,
+    )?;
+
+    let mut min_return_funds: Option<Vec<Coin>> = None;
 
     let swap_msg = match mantaswap_msg {
         mantaswap::msg::ExecuteMsg::Swap {
             stages, min_return, ..
-        } => mantaswap::msg::ExecuteMsg::Swap {
-            stages: stages.to_owned(),
-            recipient: Some(recipient),
-            min_return: min_return.to_owned(),
-        },
+        } => {
+            min_return_funds = min_return.to_owned();
+
+            mantaswap::msg::ExecuteMsg::Swap {
+                stages: stages.to_owned(),
+                recipient: Some(env.contract.address.clone()),
+                min_return: min_return.to_owned(),
+            }
+        }
         _ => Err(ContractError::WrongMantaswapMsg)?,
     };
 
@@ -148,25 +143,64 @@ fn get_wasm_msg(
         funds: funds.to_owned(),
     };
 
+    let min_return_funds = min_return_funds.ok_or(ContractError::CoinIsNotFound)?;
+    let Coin { denom, .. } = min_return_funds
+        .get(0)
+        .ok_or(ContractError::CoinIsNotFound)?;
+
+    RECIPIENT_PARAMETERS.update(
+        deps.storage,
+        |mut x| -> Result<Vec<RecipientParameters>, ContractError> {
+            x.push(RecipientParameters {
+                recipient_address,
+                channel_id: channel_id.to_owned(),
+                denom_out: denom.to_string(),
+            });
+
+            Ok(x)
+        },
+    )?;
+
     Ok(wasm_msg)
 }
 
 fn verify_ibc_parameters(
+    deps: Deps,
+    env: &Env,
     mantaswap_msg: &mantaswap::msg::ExecuteMsg,
     channel_id: &Option<String>,
-) -> Result<(), ContractError> {
+    recipient_address: &str,
+) -> Result<Addr, ContractError> {
+    let address_parts = recipient_address.split('1').collect::<Vec<&str>>();
+    let prefix = address_parts
+        .first()
+        .ok_or(ContractError::PrefixIsNotFound)?;
+
     match mantaswap_msg {
         mantaswap::msg::ExecuteMsg::Swap {
             min_return: Some(coins),
             ..
         } => {
-            let Coin { denom, .. } = coins.get(0).ok_or(ContractError::CoinIsNotFound)?;
+            let Coin { denom, .. } = coins.first().ok_or(ContractError::CoinIsNotFound)?;
 
-            if channel_id.is_some() && !denom.contains("ibc/") {
-                Err(ContractError::AssetIsNotIbcToken)?;
+            if channel_id.is_some() && !(denom.contains("ibc/") && (prefix != &BASE_PREFIX)) {
+                Err(ContractError::WrongIbcParameters {
+                    prefix: prefix.to_string(),
+                    ibc_token: denom.to_string(),
+                    channel_id: channel_id.to_owned(),
+                })?;
             }
 
-            Ok(())
+            let address = if env.block.chain_id == CHAIN_ID_DEV {
+                deps.api.addr_validate(recipient_address)?
+            } else {
+                deps.api
+                    .addr_validate(&get_addr_by_prefix(recipient_address, BASE_PREFIX)?)?;
+
+                Addr::unchecked(recipient_address)
+            };
+
+            Ok(address)
         }
         _ => Err(ContractError::WrongMantaswapMsg)?,
     }

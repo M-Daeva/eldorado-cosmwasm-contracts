@@ -14,14 +14,17 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub fn try_instantiate(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     let admin = &info.sender;
     let router = &deps.api.addr_validate(&msg.router_address)?;
 
-    CONFIG.save(deps.storage, &Config::new(admin, router))?;
+    CONFIG.save(
+        deps.storage,
+        &Config::new(admin, router, &env.block.chain_id),
+    )?;
 
     RECIPIENT_PARAMETERS.save(deps.storage, &vec![])?;
 

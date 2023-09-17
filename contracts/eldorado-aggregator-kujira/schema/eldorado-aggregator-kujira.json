@@ -1,6 +1,6 @@
 {
   "contract_name": "eldorado-aggregator-kujira",
-  "contract_version": "1.0.0",
+  "contract_version": "1.1.0",
   "idl_version": "1.0.0",
   "instantiate": {
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -47,7 +47,7 @@
         "additionalProperties": false
       },
       {
-        "description": "Called by vault to: 1) swap native Kuji -> token on Kujira (or don't swap if Kuji is asked asset) 2) send token on Kujira to user address on Kujira or other Cosmos network",
+        "description": "Called by vault to: 1) swap native Kuji -> token on Kujira 2) send token on Kujira to user address on Kujira or other Cosmos network",
         "type": "object",
         "required": [
           "swap_out"
@@ -272,12 +272,16 @@
       "type": "object",
       "required": [
         "admin",
+        "chain_id",
         "ibc_timeout",
         "router"
       ],
       "properties": {
         "admin": {
           "$ref": "#/definitions/Addr"
+        },
+        "chain_id": {
+          "type": "string"
         },
         "ibc_timeout": {
           "type": "integer",

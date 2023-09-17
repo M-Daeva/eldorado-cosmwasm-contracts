@@ -4,6 +4,8 @@ use cw_multi_test::{App, AppResponse, Executor};
 use serde::Serialize;
 use strum::IntoEnumIterator;
 
+use eldorado_base::eldorado_aggregator_kujira::state::CHAIN_ID_DEV;
+
 use crate::helpers::suite::{
     codes::WithCodes,
     types::{GetDecimals, ProjectAccount, ProjectCoin, ToAddress, WrappedResponse},
@@ -52,6 +54,10 @@ impl Project {
     pub fn new() -> Self {
         // create app and distribute coins to accounts
         let mut project = Self::create_project_with_balances();
+
+        project
+            .app
+            .update_block(|block| block.chain_id = String::from(CHAIN_ID_DEV));
 
         // register contracts code
         // packages

@@ -85,6 +85,7 @@ fn parse_attributes(
     let RecipientParameters {
         recipient_address,
         channel_id,
+        ..
     } = recipient_parameters_list
         .get(0)
         .ok_or(ContractError::RecipientParametersAreNotFound)?;

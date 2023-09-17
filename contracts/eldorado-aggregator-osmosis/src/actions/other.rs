@@ -1,9 +1,11 @@
 use std::str::FromStr;
 
 use cosmwasm_std::{
-    Addr, BankMsg, Coin, CosmosMsg, DepsMut, Env, Event, IbcMsg, IbcTimeout, Response,
+    Addr, BankMsg, Coin, CosmosMsg, DepsMut, Env, IbcMsg, IbcTimeout, Response, SubMsgResponse,
     SubMsgResult, Uint128,
 };
+
+use osmosis_std::types::osmosis::gamm::v1beta1::MsgSwapExactAmountInResponse;
 
 use eldorado_base::{
     eldorado_aggregator_osmosis::{
@@ -85,6 +87,7 @@ fn parse_attributes(
     let RecipientParameters {
         recipient_address,
         channel_id,
+        denom_out,
     } = recipient_parameters_list
         .get(0)
         .ok_or(ContractError::RecipientParametersAreNotFound)?;
@@ -94,51 +97,30 @@ fn parse_attributes(
 
     RECIPIENT_PARAMETERS.save(deps.storage, &recipient_parameters_tail)?;
 
-    let res = result
-        .to_owned()
-        .into_result()
-        .map_err(|e| ContractError::CustomError { val: e })?;
+    let mut amount_out_string: Option<String> = None;
 
-    let mut transfer_events: Vec<Event> = vec![];
+    if let SubMsgResult::Ok(SubMsgResponse { data: Some(b), .. }) = result.to_owned() {
+        let MsgSwapExactAmountInResponse { token_out_amount } =
+            b.try_into().map_err(ContractError::Std)?;
 
-    for event in res.events {
-        if event.ty.contains("transfer") {
-            for attr in &event.attributes {
-                if (attr.key == "recipient") && (attr.value == env.contract.address.as_ref()) {
-                    transfer_events.push(event.clone());
-                    break;
-                }
-            }
-        }
+        amount_out_string = Some(token_out_amount);
     }
 
-    let event = transfer_events
-        .last()
-        .ok_or(ContractError::EventIsNotFound)?;
-
-    let coin_string = &event
-        .attributes
-        .iter()
-        .find(|x| x.key == "amount")
-        .ok_or(ContractError::AttributeIsNotFound)?
-        .value;
-
-    let Coin { denom, amount } = Coin::from_str(coin_string)
-        .map_err(|e| ContractError::CustomError { val: e.to_string() })?;
+    let amount_out = Uint128::from_str(&amount_out_string.ok_or(ContractError::CoinIsNotFound)?)?;
 
     let balance = deps
         .querier
-        .query_balance(env.contract.address.as_str(), &denom)?;
+        .query_balance(env.contract.address.as_str(), denom_out)?;
 
-    if balance.amount < amount {
+    if balance.amount < amount_out {
         Err(ContractError::BalanceIsNotEnough {
-            symbol: denom.clone(),
+            symbol: denom_out.clone(),
         })?;
     }
 
     Ok((
-        amount,
-        denom,
+        amount_out,
+        denom_out.to_string(),
         recipient_address.to_owned(),
         channel_id.to_owned(),
     ))

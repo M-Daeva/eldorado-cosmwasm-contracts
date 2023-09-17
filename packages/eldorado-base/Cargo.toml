@@ -20,3 +20,4 @@ cw-storage-plus = { workspace = true }
 serde = { workspace = true }
 thiserror = { workspace = true }
 kujira = { workspace = true }
+bech32 = { workspace = true }

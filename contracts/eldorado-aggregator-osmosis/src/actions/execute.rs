@@ -1,4 +1,4 @@
-use cosmwasm_std::{CosmosMsg, Deps, DepsMut, Env, MessageInfo, Response, SubMsg, Uint128};
+use cosmwasm_std::{Addr, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Response, SubMsg, Uint128};
 
 use osmosis_std::types::{
     cosmos::base::v1beta1::Coin,
@@ -11,15 +11,16 @@ use osmosis_std::types::{
 use cw_utils::{must_pay, nonpayable, one_coin};
 
 use eldorado_base::{
-    converters::{str_to_dec, u128_to_dec},
+    converters::get_addr_by_prefix,
     eldorado_aggregator_osmosis::state::{
-        Config, CONFIG, DENOM_OSMO, RECIPIENT_PARAMETERS, SWAP_IN_REPLY, SWAP_OUT_REPLY,
+        Config, BASE_DENOM, BASE_PREFIX, CONFIG, RECIPIENT_PARAMETERS, SWAP_IN_REPLY,
+        SWAP_OUT_REPLY,
     },
     error::ContractError,
     types::RecipientParameters,
 };
 
-use crate::actions::query::query_pool;
+use crate::actions::query::{estimate_swap_exact_amount_in, query_pool};
 
 pub fn try_swap_in(
     deps: DepsMut,
@@ -30,26 +31,15 @@ pub fn try_swap_in(
 ) -> Result<Response, ContractError> {
     let coin = one_coin(&info).map_err(|e| ContractError::CustomError { val: e.to_string() })?;
     let swap_msg = get_swap_msg(
-        &deps.as_ref(),
+        deps,
         &env,
+        &vault_address,
         coin.amount,
         &coin.denom,
         pool_id,
         &None,
     )?;
     let submsg = SubMsg::reply_on_success(swap_msg, SWAP_IN_REPLY);
-
-    RECIPIENT_PARAMETERS.update(
-        deps.storage,
-        |mut x| -> Result<Vec<RecipientParameters>, ContractError> {
-            x.push(RecipientParameters {
-                recipient_address: deps.api.addr_validate(&vault_address)?,
-                channel_id: None,
-            });
-
-            Ok(x)
-        },
-    )?;
 
     Ok(Response::new()
         .add_submessage(submsg)
@@ -64,29 +54,18 @@ pub fn try_swap_out(
     pool_id: u64,
     channel_id: Option<String>,
 ) -> Result<Response, ContractError> {
-    let amount = must_pay(&info, DENOM_OSMO)
+    let amount = must_pay(&info, BASE_DENOM)
         .map_err(|e| ContractError::CustomError { val: e.to_string() })?;
     let swap_msg = get_swap_msg(
-        &deps.as_ref(),
+        deps,
         &env,
+        &user_address,
         amount,
-        DENOM_OSMO,
+        BASE_DENOM,
         pool_id,
         &channel_id,
     )?;
     let submsg = SubMsg::reply_on_success(swap_msg, SWAP_OUT_REPLY);
-
-    RECIPIENT_PARAMETERS.update(
-        deps.storage,
-        |mut x| -> Result<Vec<RecipientParameters>, ContractError> {
-            x.push(RecipientParameters {
-                recipient_address: deps.api.addr_validate(&user_address)?,
-                channel_id,
-            });
-
-            Ok(x)
-        },
-    )?;
 
     Ok(Response::new()
         .add_submessage(submsg)
@@ -123,8 +102,9 @@ pub fn try_update_config(
 }
 
 fn get_swap_msg(
-    deps: &Deps,
+    deps: DepsMut,
     env: &Env,
+    recipient_address: &str,
     amount_in: Uint128,
     denom_in: &str,
     pool_id: u64,
@@ -132,34 +112,29 @@ fn get_swap_msg(
 ) -> Result<CosmosMsg, ContractError> {
     let Pool {
         id, pool_assets, ..
-    } = query_pool(deps.to_owned(), env.to_owned(), pool_id)?;
+    } = query_pool(deps.as_ref(), pool_id)?;
 
     let asset_list = pool_assets
         .into_iter()
         .map(|x| -> Result<Coin, ContractError> { x.token.ok_or(ContractError::CoinIsNotFound) })
         .collect::<Result<Vec<Coin>, ContractError>>()?;
 
-    let asset_in = asset_list
-        .iter()
-        .find(|x| x.denom == denom_in)
-        .ok_or(ContractError::CoinIsNotFound)?;
-
     let asset_out = asset_list
         .iter()
         .find(|x| x.denom != denom_in)
         .ok_or(ContractError::CoinIsNotFound)?;
+    let denom_out = &asset_out.denom;
 
-    verify_ibc_parameters(&asset_out.denom, channel_id)?;
-
-    let token_out_min_amount = (str_to_dec("0.9")
-        * u128_to_dec(amount_in)
-        * (str_to_dec(&asset_in.amount) / str_to_dec(&asset_in.amount)))
-    .to_string();
+    let recipient_address =
+        verify_ibc_parameters(deps.as_ref(), denom_out, channel_id, recipient_address)?;
 
     let routes = vec![SwapAmountInRoute {
         pool_id: id,
-        token_out_denom: asset_out.denom.to_owned(),
+        token_out_denom: denom_out.to_string(),
     }];
+
+    let token_out_min_amount =
+        estimate_swap_exact_amount_in(deps.as_ref(), id, amount_in, denom_in, &routes)?;
 
     let swap_msg = MsgSwapExactAmountIn {
         sender: env.contract.address.to_string(),
@@ -171,16 +146,43 @@ fn get_swap_msg(
         token_out_min_amount,
     };
 
+    RECIPIENT_PARAMETERS.update(
+        deps.storage,
+        |mut x| -> Result<Vec<RecipientParameters>, ContractError> {
+            x.push(RecipientParameters {
+                recipient_address,
+                channel_id: channel_id.to_owned(),
+                denom_out: denom_out.to_string(),
+            });
+
+            Ok(x)
+        },
+    )?;
+
     Ok(swap_msg.into())
 }
 
 fn verify_ibc_parameters(
+    deps: Deps,
     ibc_token: &str,
     channel_id: &Option<String>,
-) -> Result<(), ContractError> {
-    if channel_id.is_some() && !ibc_token.contains("ibc/") {
-        Err(ContractError::AssetIsNotIbcToken)?;
+    recipient_address: &str,
+) -> Result<Addr, ContractError> {
+    let address_parts = recipient_address.split('1').collect::<Vec<&str>>();
+    let prefix = address_parts
+        .first()
+        .ok_or(ContractError::PrefixIsNotFound)?;
+
+    if channel_id.is_some() && (!ibc_token.contains("ibc/") || (prefix == &BASE_PREFIX)) {
+        Err(ContractError::WrongIbcParameters {
+            prefix: prefix.to_string(),
+            ibc_token: ibc_token.to_string(),
+            channel_id: channel_id.to_owned(),
+        })?;
     }
 
-    Ok(())
+    deps.api
+        .addr_validate(&get_addr_by_prefix(recipient_address, BASE_PREFIX)?)?;
+
+    Ok(Addr::unchecked(recipient_address))
 }

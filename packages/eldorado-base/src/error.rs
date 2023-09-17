@@ -48,11 +48,18 @@ pub enum ContractError {
     #[error("channel_id is not found!")]
     ChannelIdIsNotFound,
 
-    #[error("The asset is not IBC token!")]
-    AssetIsNotIbcToken,
+    #[error("Wrong IBC parameters: prefix - {prefix:?}, ibc_token - {ibc_token:?}, chain_id - {channel_id:?}!")]
+    WrongIbcParameters {
+        prefix: String,
+        ibc_token: String,
+        channel_id: Option<String>,
+    },
 
     #[error("Coin is not found!")]
     CoinIsNotFound,
+
+    #[error("Prefix is not found!")]
+    PrefixIsNotFound,
 
     // eldorado_aggregator_osmosis
     #[error("Pools can not be parsed!")]

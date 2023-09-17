@@ -4,7 +4,10 @@ use speculoos::assert_that;
 
 use kujira::Denom;
 
-use eldorado_base::{eldorado_aggregator_kujira::state::Config, mantaswap::msg::ExecuteMsg};
+use eldorado_base::{
+    eldorado_aggregator_kujira::state::{Config, CHAIN_ID_DEV},
+    mantaswap::msg::ExecuteMsg,
+};
 
 use crate::helpers::{
     eldorado_aggregator_kujira::EldoradoAggregatorKujiraExtension,
@@ -381,7 +384,9 @@ fn swap_out_ibc_token_without_ibc_channel() {
 }
 
 #[test]
-#[should_panic(expected = "The asset is not IBC token!")]
+#[should_panic(
+    expected = "Wrong IBC parameters: prefix - \"alice\", ibc_token - \"factory/uusk\", chain_id - Some(\"channel-0\")"
+)]
 fn swap_out_ibc_channel_without_ibc_token() {
     let mut project = Project::new();
 
@@ -480,12 +485,14 @@ fn update_config_default() {
         admin: ProjectAccount::Admin.to_address(),
         router: project.get_mantaswap_router_address(),
         ibc_timeout: 15 * 60,
+        chain_id: String::from(CHAIN_ID_DEV),
     });
 
     assert_that(&config_after).is_equal_to(&Config {
         admin: ProjectAccount::Admin.to_address(),
         router: ProjectAccount::Owner.to_address(),
         ibc_timeout: 5 * 60,
+        chain_id: String::from(CHAIN_ID_DEV),
     });
 }
 

@@ -2,6 +2,6 @@
   "PREFIX": "kujira",
   "CHAIN_ID": "harpoon-4",
   "RPC": "https://kujira-testnet-rpc.polkachu.com:443",
-  "CONTRACT_CODE": "2422",
-  "CONTRACT_ADDRESS": "kujira1mmhrcaxwe6qtcpnd7ua46qywwyndhpcfzrn8atyslfcwttjwkrcsq0v6f7"
+  "CONTRACT_CODE": "2448",
+  "CONTRACT_ADDRESS": "kujira1wlkn8px6y5jfp9suqusdjmnhysd4594qsju87694gl5mlckjwscs87sfdg"
 }

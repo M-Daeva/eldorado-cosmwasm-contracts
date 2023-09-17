@@ -1,1 +1,7 @@
-{ "PREFIX":"osmo", "CHAIN_ID":"osmo-test-5", "RPC":"https://rpc.osmotest5.osmosis.zone:443", "CONTRACT_CODE":"4257", "CONTRACT_ADDRESS":"osmo1n9qe5jjq3w3mc4pgz7jswknrluq6dwzdw2hzc8apddqw4k0p2ulqg5xxee" }
+{
+  "PREFIX": "osmo",
+  "CHAIN_ID": "osmo-test-5",
+  "RPC": "https://rpc.osmotest5.osmosis.zone:443",
+  "CONTRACT_CODE": "4288",
+  "CONTRACT_ADDRESS": "osmo1pmhdtae4zyvjveva9f6a9tgenslyr46w5ws67u7447473cn9gqxqhl92d7"
+}
